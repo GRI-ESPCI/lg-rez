@@ -54,6 +54,15 @@ class Modif:
         return hash((self.row, self.column, self.val))
 
 
+@functools.cache
+def _get_creds(*scopes: str) -> service_account.ServiceAccountCredentials:
+    # use creds to create a client to interact with the Google Drive API
+    LGREZ_GCP_CREDENTIALS = env.load("LGREZ_GCP_CREDENTIALS")
+    return service_account.ServiceAccountCredentials.from_json_keyfile_dict(
+        json.loads(LGREZ_GCP_CREDENTIALS), list(scopes)
+    )
+
+
 async def connect(key: str) -> gspread_asyncio.AsyncioGspreadWorksheet:
     """Charge les credentials GSheets et renvoie le classeur demandé.
 
@@ -65,16 +74,8 @@ async def connect(key: str) -> gspread_asyncio.AsyncioGspreadWorksheet:
     Returns:
         Le classeur correspondant à l'ID demandé.
     """
-    # use creds to create a client to interact with the Google Drive API
-    LGREZ_GCP_CREDENTIALS = env.load("LGREZ_GCP_CREDENTIALS")
-
-    def _get_creds():
-        scope = ["https://spreadsheets.google.com/feeds"]
-        return service_account.ServiceAccountCredentials.from_json_keyfile_dict(
-            json.loads(LGREZ_GCP_CREDENTIALS), scope
-        )
-
-    manager = gspread_asyncio.AsyncioGspreadClientManager(_get_creds)
+    scope = "https://spreadsheets.google.com/feeds"
+    manager = gspread_asyncio.AsyncioGspreadClientManager(lambda: _get_creds(scope))
     client = await manager.authorize()
 
     # Open the workbook
@@ -180,11 +181,8 @@ def get_doc_content(doc_id: str) -> list[tuple[str, dict]]:
         googleapiclient.errors.HttpError: ID incorrect ou document non
             accessible.
     """
-    LGREZ_GCP_CREDENTIALS = env.load("LGREZ_GCP_CREDENTIALS")
-
-    scope = ["https://www.googleapis.com/auth/documents.readonly"]
-    creds = service_account.ServiceAccountCredentials.from_json_keyfile_dict(json.loads(LGREZ_GCP_CREDENTIALS), scope)
-    service = build("docs", "v1", credentials=creds)
+    scope = "https://www.googleapis.com/auth/documents.readonly"
+    service = build("docs", "v1", credentials=_get_creds(scope))
 
     # Retrieve the documents contents from the Docs service.
     document = service.documents().get(documentId=doc_id).execute()
@@ -211,15 +209,12 @@ def get_doc_content(doc_id: str) -> list[tuple[str, dict]]:
 
 def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     """Récupère le contenu binaire d'un fichier Google Drive.
-
     Args:
         folder_id: ID du fichier à récupérer (doit être public ou
             dans le Drive partagé avec le compte de service).
-
     Returns:
         A list of, for each file, a directory with ``"file_id"``,
         ``name`` (with extension) and ``extension`` (without dot) data.
-
     Raises:
         googleapiclient.errors.HttpError: ID incorrect ou dossier non
             accessible.
@@ -251,14 +246,11 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
 
 def download_file(file_id: str) -> bytes:
     """Récupère le contenu binaire d'un fichier Google Drive.
-
     Args:
         file_id: ID du fichier à récupérer (doit être public ou
             dans le Drive partagé avec le compte de service).
-
     Returns:
         Le contenu binaire du fichier.
-
     Raises:
         googleapiclient.errors.HttpError: ID incorrect ou document non
             accessible.

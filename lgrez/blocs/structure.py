@@ -16,11 +16,12 @@ class Union(list):
     Args:
         *args: Accepted structures.
     """
+
     def __init__(self, *args) -> None:
-        super().__init__(args)      # Pack items
+        super().__init__(args)  # Pack items
 
     def __hash__(self) -> int:
-        return 0        # don't do that
+        return 0  # don't do that
 
     def __str__(self) -> str:
         return "  OR  ".join(str(item) for item in self)
@@ -44,6 +45,7 @@ class MatchError(RuntimeError):
         model: Structure we want to match on.
         path: JSON-like path from the structure root.
     """
+
     def __init__(
         self,
         msg: str,
@@ -84,9 +86,7 @@ class _StructureMatcher:
     def _check_structure_dict(self, data: dict, model: dict) -> None:
         for key, model_value in model.items():
             if key not in data:
-                raise MatchError(
-                    f"Missing {key!r} in data.", data, model, self.path
-                )
+                raise MatchError(f"Missing {key!r} in data.", data, model, self.path)
             with self._dig_in(key):
                 self.check_structure(data[key], model_value)
 
@@ -98,9 +98,7 @@ class _StructureMatcher:
 
     def _check_structure_list(self, data: list, model: list) -> None:
         if len(data) != len(model):
-            raise MatchError(
-                "Lists are not of same length.", data, model, self.path
-            )
+            raise MatchError("Lists are not of same length.", data, model, self.path)
         for count, (data_item, model_item) in enumerate(zip(data, model)):
             with self._dig_in(f"[{count}]"):
                 self.check_structure(data_item, model_item)
@@ -141,27 +139,18 @@ class _StructureMatcher:
                     if self.test_structure(data, submodel):
                         break
                 else:
-                    raise MatchError(
-                        "Could not match data on either of models.",
-                        data, model, self.path
-                    )
+                    raise MatchError("Could not match data on either of models.", data, model, self.path)
 
             # Type restriction
             case (enum.EnumMeta() | discord.enums.EnumMeta()), _:
                 self._check_structure_enum(data, model)
-            case type(), model():   # isinstance but 500 IQ (self-slurping yes)
+            case type(), model():  # isinstance but 500 IQ (self-slurping yes)
                 pass
             case type(), _:
-                raise MatchError(
-                    f"Data is not of requested type.",
-                    data, model, self.path
-                )
+                raise MatchError(f"Data is not of requested type.", data, model, self.path)
             case types.UnionType(), _:
                 if not isinstance(data, model):
-                    raise MatchError(
-                        f"Data is not of any of the requested types.",
-                        data, model, self.path
-                    )
+                    raise MatchError(f"Data is not of any of the requested types.", data, model, self.path)
 
             # Submodel
             case dict(), dict() if self._is_generic(model):
@@ -173,18 +162,12 @@ class _StructureMatcher:
             case list(), list():
                 self._check_structure_list(data, model)
             case (dict() | list()), _:
-                raise MatchError(
-                    f"Data is not of requested type.",
-                    data, model, self.path
-                )
+                raise MatchError(f"Data is not of requested type.", data, model, self.path)
 
             # Literal
             case (str() | int() | float() | True | False | None), _:
                 if data != model:
-                    raise MatchError(
-                        f"Data is not the required literal.",
-                        data, model, self.path
-                    )
+                    raise MatchError(f"Data is not the required literal.", data, model, self.path)
 
             # Fallback
             case _:
@@ -243,16 +226,19 @@ def check_server_structure(
                 "text",
                 "voice",
             ]
-        }
+        },
     )
 
     # Structure requise
     required_structure = {
         "name": str,
-        "icon": Union(None, {
-            "drive": bool,
-            "png_path_or_id": str,
-        }),
+        "icon": Union(
+            None,
+            {
+                "drive": bool,
+                "png_path_or_id": str,
+            },
+        ),
         "afk_channel": Union(channel, None),
         "afk_timeout": int,
         "verification_level": discord.VerificationLevel,
@@ -309,23 +295,17 @@ def check_server_structure(
         if role == "everyone":
             continue
         if not role in structure["roles"]:
-            raise RuntimeError(
-                "config.server_structure[\"roles\"]: "
-                f"Missing role \"{role}\", required for playing!"
-            )
+            raise RuntimeError('config.server_structure["roles"]: ' f'Missing role "{role}", required for playing!')
     for channel in required_channels:
         for categ in structure["categories"].values():
             if channel in categ["channels"]:
                 break
         else:
             raise RuntimeError(
-                "config.server_structure[\"categories\"][<any categ>]"
-                "[\"channels\"]: "
-                f"Missing channel \"{channel}\", required for playing!"
+                'config.server_structure["categories"][<any categ>]'
+                '["channels"]: '
+                f'Missing channel "{channel}", required for playing!'
             )
     for emoji in required_emojis:
         if not emoji in structure["emojis"]["required"]:
-            raise RuntimeError(
-                "config.server_structure[\"emojis\"]: "
-                f"Missing emoji \"{emoji}\", required for playing!"
-            )
+            raise RuntimeError('config.server_structure["emojis"]: ' f'Missing emoji "{emoji}", required for playing!')

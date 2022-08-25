@@ -126,12 +126,6 @@ class GestionTaches(commands.Cog):
         except ValueError:
             pass
 
-        if ts < datetime.datetime.now():
-            mess = await ctx.send("Date dans le passé ==> exécution immédiate ! On valide ?")
-            if not await tools.yes_no(mess):
-                await ctx.send("Mission aborted.")
-                return
-
         tache = Tache(timestamp=ts, commande=commande, action=Action.query.get(action_id))
         tache.add()  # Planifie la tâche
         await ctx.send(
@@ -222,18 +216,8 @@ class GestionTaches(commands.Cog):
             await ctx.send("Aucune tâche trouvée.")
             return
 
-        message = await ctx.send(
-            "Annuler les tâches :\n"
-            + "\n".join(
-                [
-                    f" - {tools.code(tache.timestamp.strftime('%d/%m/%Y %H:%M:%S'))} " f"> {tools.code(tache.commande)}"
-                    for tache in taches
-                ]
-            )
-        )
-        if not await tools.yes_no(message):
-            await ctx.send("Mission aborted.")
-            return
-
         Tache.delete(*taches)  # Annule les tâches
-        await ctx.send("Tâche(s) annulée(s).")
+        await ctx.send(
+            "Tâche(s) annulée(s) :\n"
+            + "\n".join(tools.code_bloc(f"!planif {tache.timestamp:%d/%m/%Y-%X} {tache.commande}`") for tache in taches)
+        )

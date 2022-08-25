@@ -8,6 +8,7 @@ déroulement des autres ou le fonctionnement du bot)
 import asyncio
 import os
 import re
+import os
 import sys
 
 # Unused imports because useful for !do / !shell globals
@@ -15,7 +16,7 @@ import discord
 from discord.ext import commands
 
 from lgrez import __version__, config, features, blocs, bdd
-from lgrez.blocs import tools, realshell, one_command
+from lgrez.blocs import gsheets, tools, realshell, one_command
 from lgrez.bdd import *  # toutes les tables dans globals()
 
 
@@ -329,7 +330,7 @@ class Special(commands.Cog):
             )
             .add_field(
                 name="Copyright :",
-                value=":copyright: 2021 Club BD-Jeux × GRIs – ESPCI Paris - PSL",
+                value=":copyright: 2022 Club BD-Jeux × GRIs – ESPCI Paris - PSL",
                 inline=False,
             )
             .set_footer(

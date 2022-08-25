@@ -32,7 +32,7 @@ from lgrez.features.sync import transtype
 
 
 def _joueur_repl(mtch: re.Match) -> str:
-    """Remplace @(Prénom Nom) par la mention du joueur, si possible"""
+    """Remplace @... par la mention d'un joueur, si possible"""
     nearest = Joueur.find_nearest(mtch.group(1), col=Joueur.nom, sensi=0.8)
     if nearest:
         joueur = nearest[0][0]
@@ -44,9 +44,12 @@ def _joueur_repl(mtch: re.Match) -> str:
 
 
 def _role_repl(mtch: re.Match) -> str:
-    """Remplace @role_slug par la mention du rôle"""
-    if mtch.group(1).lower() in config.Role:
-        role = getattr(config.Role, mtch.group(1))
+    """Remplace @role_slug par la mention du rôle, si possible"""
+    try:
+        role = getattr(config.Role, mtch.group(1).lower())
+    except AttributeError:
+        return mtch.group(0)
+    else:
         return role.mention
 
 

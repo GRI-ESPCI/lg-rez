@@ -142,7 +142,7 @@ async def run_admin_console(locals: dict) -> None:
     Args:
         locals: the objects accessible from the console.
     """
-    if os.isatty(sys.stdin.fileno()):   # Lancement depuis un terminal
+    if os.isatty(sys.stdin.fileno()):  # Lancement depuis un terminal
         await asyncio.sleep(1)
         cons = AdminConsole(locals=locals)
         await cons.interact()

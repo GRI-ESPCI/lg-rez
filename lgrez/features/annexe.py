@@ -118,6 +118,15 @@ class Annexe(commands.Cog):
         rep = rep[3:] if rep.startswith(" +") else rep
         await tools.send_blocs(ctx, rep)
 
+    @commands.command()
+    @tools.mjs_only
+    async def nextroll(self, ctx, *, next=None):
+        """✨ Shhhhhhhhhhhh.
+        Ça sent la magouilleuh
+        """
+        self.next_roll = next
+        await ctx.message.add_reaction("🤫")
+
     @commands.command(aliases=["cf", "pf"])
     async def coinflip(self, ctx):
         """Renvoie le résultat d'un tirage à Pile ou Face (aléatoire)

@@ -59,4 +59,8 @@ setuptools.setup(
     ],
     install_requires=requirements,
     python_requires=">=3.10",
+    package_data={
+        "lgrez": ["server_structure.json"],
+    },
+    include_package_data=True,
 )

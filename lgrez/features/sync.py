@@ -530,8 +530,7 @@ async def modif_joueur(joueur_id: int, modifs: list[TDBModif], silent: bool = Fa
 
             for base in new_role.base_actions:
                 # Ajout et création des tâches si trigger temporel
-                action = Action(joueur=joueur, base=base, cooldown=0, charges=base.base_charges)
-                gestion_actions.add_action(action)
+                gestion_actions.add_action(joueur=joueur, base=base, cooldown=0, charges=base.base_charges)
 
             if not silent:
                 notif += (
@@ -606,14 +605,10 @@ async def process_mort(joueur: Joueur) -> None:
 
         elif joueur == boudoir.gerant:
             # Mort du gérant (et pas cimetière) : transférer le boudoir
-            oldest_bouderie = min(
-                (
-                    bouderie
-                    for bouderie in boudoir.bouderies
-                    if bouderie.joueur != joueur and bouderie.joueur.est_vivant
-                ),
-                key=lambda b: b.ts_added,
-            )
+            bouderies = [
+                bouderie for bouderie in boudoir.bouderies if bouderie.joueur != joueur and bouderie.joueur.est_vivant
+            ]
+            oldest_bouderie = min(bouderies, key=lambda b: b.ts_added)
             boudoir.gerant = oldest_bouderie.joueur
             boudoir.update()
             await boudoir.chan.send(
@@ -624,7 +619,7 @@ async def process_mort(joueur: Joueur) -> None:
             )
             await boudoir.chan.send(
                 tools.ital(
-                    "Le boudoir peut être transféré à un autre membre à l'aide " "de la commande `!boudoir transfer`."
+                    "Le boudoir peut être transféré à un autre membre à l'aide de la commande `!boudoir transfer`."
                 )
             )
 

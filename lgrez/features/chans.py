@@ -63,21 +63,18 @@ def gerant_only(callback):
     return new_callback
 
 
-async def add_joueur_to_boudoir(boudoir, joueur, gerant=False):
+async def add_joueur_to_boudoir(boudoir: Boudoir, joueur: Joueur, gerant: bool = False) -> bool:
     """Ajoute un joueur sur un boudoir.
 
-    Crée la :class:`.Bouderie` correspondante et modifie les
-    permissions du salon.
+    Crée la :class:`.Bouderie` correspondante et modifie les permissions du salon.
 
     Args:
-        boudoir (.Boudoir): Le boudoir où ajouter un joueur.
-        joueur (.Joueur): Le joueur à ajouter.
-        gerant (bool): Si le joueur doit être ajouté avec les
-            permissions de gérant.
+        boudoir: Le boudoir où ajouter un joueur.
+        joueur: Le joueur à ajouter.
+        gerant: Si le joueur doit être ajouté avec les permissions de gérant.
 
     Returns:
-        :class:`bool` - ``True`` si le joueur a été ajouté,
-            ``False`` si il y était déjà / le boudoir est fermé.
+        ``True`` si le joueur a été ajouté, ``False`` si il y était déjà / le boudoir est fermé.
     """
     if joueur in boudoir.joueurs:
         # Joueur déjà dans le boudoir
@@ -98,15 +95,14 @@ async def add_joueur_to_boudoir(boudoir, joueur, gerant=False):
     return True
 
 
-async def remove_joueur_from_boudoir(boudoir, joueur):
+async def remove_joueur_from_boudoir(boudoir: Boudoir, joueur: Joueur) -> None:
     """Retire un joueur d'un boudoir.
 
-    Supprime la :class:`.Bouderie` correspondante et modifie les
-    permissions du salon.
+    Supprime la :class:`.Bouderie` correspondante et modifie les permissions du salon.
 
     Args:
-        boudoir (.Boudoir): Le boudoir d'où enlever un joueur.
-        joueur (.Joueur): Le joueur à enlever.
+        boudoir: Le boudoir d'où enlever un joueur.
+        joueur: Le joueur à enlever.
     """
     Bouderie.query.filter_by(boudoir=boudoir, joueur=joueur).one().delete()
     await boudoir.chan.set_permissions(joueur.member, overwrite=None)
@@ -124,7 +120,7 @@ async def remove_joueur_from_boudoir(boudoir, joueur):
         )
 
 
-async def _create_boudoir(joueur, nom):
+async def _create_boudoir(joueur: Joueur, nom: str) -> Boudoir:
     """Crée un boudoir avec le gérant et le nom requis"""
     now = datetime.datetime.now()
     categ = await tools.multicateg(config.boudoirs_category_name)
@@ -235,19 +231,8 @@ class GestionChans(commands.Cog):
 
         await ctx.send("Création du boudoir...")
         async with ctx.typing():
-            now = datetime.datetime.now()
-            categ = await tools.multicateg(config.boudoirs_category_name)
-            chan = await config.guild.create_text_channel(
-                nom,
-                topic=f"Boudoir crée le {now:%d/%m à %H:%M}. " f"Gérant(e) : {joueur.nom}",
-                category=categ,
-            )
-
-            boudoir = Boudoir(chan_id=chan.id, nom=nom, ts_created=now)
-            boudoir.add()
-            await boudoir.add_joueur(joueur, gerant=True)
-
-            await chan.send(
+            boudoir = await _create_boudoir(joueur, nom)
+            await boudoir.chan.send(
                 f"{member.mention}, voici ton boudoir ! "
                 "Tu peux maintenant y inviter des gens avec la commande "
                 "`!boudoir invite`."
@@ -283,7 +268,7 @@ class GestionChans(commands.Cog):
             await ctx.send(f"{joueur.nom} n'est pas membre du boudoir !")
             return
 
-        await boudoir.remove_joueur(joueur)
+        await remove_joueur_from_boudoir(boudoir, joueur)
         await joueur.private_chan.send(f"Tu as été expulsé(e) du boudoir " f"« {boudoir.nom} ».")
         await ctx.send(f"{joueur.nom} a bien été expulsé de ce boudoir.")
 
@@ -355,7 +340,7 @@ class GestionChans(commands.Cog):
 
         await ctx.send("Suppression...")
         for joueur in boudoir.joueurs:
-            await boudoir.remove_joueur(joueur)
+            await remove_joueur_from_boudoir(boudoir, joueur)
             await joueur.private_chan.send(f"Le boudoir « {boudoir.nom } » a été supprimé.")
 
         await boudoir.chan.edit(name=f"\N{CROSS MARK} {boudoir.nom}")
@@ -391,6 +376,71 @@ class GestionChans(commands.Cog):
     async def ping(self, ctx, *, mess=""):
         """Mentionne tous les joueurs vivants dans le boudoir."""
         await ctx.channel.send(f"{config.Role.joueur_en_vie.mention} {mess}")
+
+    @boudoir.command(aliases=["locate", "whereis"])
+    @tools.mjs_only
+    async def find(self, ctx, *cibles):
+        """✨ Trouve le(s) boudoir(s) réunissant certains joueurs (COMMANDE MJ)
+
+        Args:
+            *cibles: noms ou mentions des joueurs qui nous intéressent.
+        """
+        joueurs = [await tools.boucle_query_joueur(ctx, cible=cible) for cible in cibles]
+        boudoirs = [boudoir for boudoir in Boudoir.query.all() if all(joueur in boudoir.joueurs for joueur in joueurs)]
+
+        if not boudoirs:
+            await ctx.reply("Pas de boudoir(s) réunissant ces joueurs.")
+        else:
+            liste = "\n".join(f"- {boudoir.chan.mention} ({len(boudoir.joueurs)} joueurs)" for boudoir in boudoirs)
+            await tools.send_blocs(ctx, f"{len(boudoirs)} boudoirs :\n{liste}")
+
+    @boudoir.command()
+    async def help(self, ctx):
+        """✨ Informations sur les sous-commandes disponibles
+
+        Alias pour ``!help boudoir``.
+        """
+        ctx.message.content = "!help boudoir"
+        with one_command.bypass(ctx):
+            await config.bot.process_commands(ctx.message)
+
+    @commands.command()
+    @tools.vivants_only
+    @tools.private
+    async def mp(self, ctx, *, cible=None):
+        """✨ Raccourci pour créer un boudoir et y ajouter un joueur.
+
+        Si un boudoir existe déjà avec uniquement ce joueur et toi, n'en crée pas un nouveau.
+
+        Args:
+            cible: la personne avec qui créer un boudoir.
+        """
+        member = ctx.author
+        joueur = Joueur.from_member(member)
+        autre = await tools.boucle_query_joueur(ctx, cible=cible, message="À qui souhaites-tu parler ?")
+
+        if joueur == autre:
+            await ctx.send(f"Ton boudoir a bien été créé : {ctx.channel.mention}")
+            await ctx.send("(tocard)")
+            return
+
+        # Recherche si boudoir existant
+        boudoir = next((boudoir for boudoir in joueur.boudoirs if set(boudoir.joueurs) == {joueur, autre}), None)
+        if boudoir:
+            await ctx.reply(f"Ce boudoir existe déjà : {boudoir.chan.mention}")
+            return
+
+        await ctx.reply("Création du boudoir...")
+        async with ctx.typing():
+            nom = f"{joueur.nom} × {autre.nom}"
+            boudoir = await _create_boudoir(joueur, nom)
+            await boudoir.chan.send(f"{member.mention}, voici ton boudoir !")
+
+        await ctx.send(f"Ton boudoir a bien été créé : {boudoir.chan.mention}")
+
+        mess = await boudoir.chan.send(f"Invitation envoyée à {autre.nom}.")
+        asyncio.create_task(_invite(autre, boudoir, mess))
+        # On envoie l'invitation en arrière-plan (libération du chan).
 
     @commands.command()
     @tools.mjs_only
