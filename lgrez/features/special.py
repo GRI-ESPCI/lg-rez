@@ -15,12 +15,12 @@ import discord
 from discord.ext import commands
 
 from lgrez import __version__, config, features, blocs, bdd
-from lgrez.blocs import gsheets, tools, realshell, one_command
-from lgrez.bdd import *       # toutes les tables dans globals()
+from lgrez.blocs import tools, realshell, one_command
+from lgrez.bdd import *  # toutes les tables dans globals()
 
 
-async def _filter_runnables(commands, ctx):
-    """Retourne les commandes pouvant run parmis commands"""
+async def _filter_runnables(commands: list[commands.Command], ctx: commands.Context) -> list[commands.Command]:
+    """Retourne les commandes pouvant run parmi ``commands``"""
     runnables = []
     with one_command.bypass(ctx):
         # On désactive la limitation de une commande simultanée
@@ -48,7 +48,6 @@ class Special(commands.Cog):
         """
         sys.exit()
 
-
     @commands.command()
     @tools.mjs_only
     async def do(self, ctx, *, code):
@@ -56,7 +55,7 @@ class Special(commands.Cog):
 
         Args:
             code: instructions valides dans le contexte du LGbot
-                (utilisables notemment : ``ctx``, ``config``, ``blocs``,
+                (utilisables notamment : ``ctx``, ``config``, ``blocs``,
                 ``features``, ``bdd``, ``<table>``...)
 
         Si ``code`` est une coroutine, elle sera awaited
@@ -71,8 +70,10 @@ class Special(commands.Cog):
         À utiliser avec parcimonie donc, et QUE pour du
         développement/debug !
         """
+
         class Answer:
             rep = None
+
         _a = Answer()
 
         locs = globals()
@@ -82,7 +83,6 @@ class Special(commands.Cog):
         if asyncio.iscoroutine(_a.rep):
             _a.rep = await _a.rep
         await tools.send_code_blocs(ctx, str(_a.rep))
-
 
     @commands.command()
     @tools.mjs_only
@@ -103,7 +103,6 @@ class Special(commands.Cog):
             await shell.interact()
         except realshell.RealShellExit as exc:
             raise tools.CommandExit(*exc.args or ["!shell: Forced to end."])
-
 
     @commands.command()
     @tools.mjs_only
@@ -132,7 +131,6 @@ class Special(commands.Cog):
 
         await features.inscription.main(member)
 
-
     @commands.command()
     @tools.mjs_only
     async def doas(self, ctx, *, qui_quoi):
@@ -156,17 +154,17 @@ class Special(commands.Cog):
         try:
             member = joueur.member
         except ValueError:
-            await ctx.send(f"{joueur} absent du serveur, "
-                           "tentative de contournement")
+            await ctx.send(f"{joueur} absent du serveur, tentative de contournement")
+
             class PseudoMember:
                 __class__ = discord.Member
                 id = joueur.discord_id
                 display_name = joueur.nom
                 guild = config.guild
                 mention = f"[@{joueur.nom}]"
-                top_role = (config.Role.joueur_en_vie if joueur.est_vivant
-                            else config.Role.joueur_mort)
+                top_role = config.Role.joueur_en_vie if joueur.est_vivant else config.Role.joueur_mort
                 roles = [config.Role.everyone, top_role]
+
             member = PseudoMember()
 
         ctx.message.author = member
@@ -174,7 +172,6 @@ class Special(commands.Cog):
         await ctx.send(f":robot: Exécution en tant que {joueur.nom} :")
         with one_command.bypass(ctx):
             await config.bot.process_commands(ctx.message)
-
 
     @commands.command(aliases=["autodestruct", "ad"])
     @tools.mjs_only
@@ -184,7 +181,7 @@ class Special(commands.Cog):
         Args:
             quoi: commande à exécuter, commençant par un ``!``
 
-        Utile notemment pour faire des commandes dans un channel public,
+        Utile notamment pour faire des commandes dans un channel public,
         pour que la commande (moche) soit immédiatement supprimée.
         """
         await ctx.message.delete()
@@ -193,7 +190,6 @@ class Special(commands.Cog):
 
         with one_command.bypass(ctx):
             await config.bot.process_commands(ctx.message)
-
 
     @one_command.do_not_limit
     @commands.command()
@@ -209,7 +205,6 @@ class Special(commands.Cog):
             config.bot.in_command.remove(ctx.channel.id)
         await ctx.send("Te voilà libre, camarade !")
 
-
     @commands.command(aliases=["aide", "aled", "oskour"])
     async def help(self, ctx, *, command=None):
         """Affiche la liste des commandes utilisables et leur utilisation
@@ -222,10 +217,9 @@ class Special(commands.Cog):
         accessibles à l'utilisateur.
         """
         pref = config.bot.command_prefix
-        cogs = config.bot.cogs                  # Dictionnaire nom: cog
+        cogs = config.bot.cogs  # Dictionnaire nom: cog
         commandes = {cmd.name: cmd for cmd in config.bot.commands}
-        aliases = {alias: nom for nom, cmd in commandes.items()
-                   for alias in cmd.aliases}
+        aliases = {alias: nom for nom, cmd in commandes.items() for alias in cmd.aliases}
         # Dictionnaire alias: nom de la commande
 
         len_max = max(len(cmd) for cmd in commandes)
@@ -244,19 +238,16 @@ class Special(commands.Cog):
                     continue
 
                 r += f"\n\n{type(cog).__name__} - {cog.description} :"
-                for cmd in runnables:       # pour chaque commande runnable
+                for cmd in runnables:  # pour chaque commande runnable
                     r += descr_command(cmd)
 
-            runnables_hors_cog = await _filter_runnables(
-                (cmd for cmd in config.bot.commands if not cmd.cog), ctx
-            )
+            runnables_hors_cog = await _filter_runnables((cmd for cmd in config.bot.commands if not cmd.cog), ctx)
             if runnables_hors_cog:
                 r += "\n\nCommandes isolées :"
                 for cmd in runnables_hors_cog:
                     r += descr_command(cmd)
 
-            r += (f"\n\nUtilise <{pref}help command> pour "
-                  "plus d'information sur une commande.")
+            r += f"\n\nUtilise <{pref}help command> pour plus d'information sur une commande."
 
         else:
             # Aide détaillée sur une commande
@@ -267,7 +258,7 @@ class Special(commands.Cog):
                 # Si !help d'un alias
                 command = aliases[command]
 
-            if command in commandes:            # Si commande existante
+            if command in commandes:  # Si commande existante
                 cmd = commandes[command]
 
                 doc = cmd.help or ""
@@ -279,32 +270,28 @@ class Special(commands.Cog):
                 # enlève les :class: et consors
 
                 if isinstance(cmd, commands.Group):
-                    r = (f"{pref}{command} <option> [args...] – {doc}\n\n"
-                         "Options :\n")
+                    r = f"{pref}{command} <option> [args...] – {doc}\n\nOptions :\n"
 
                     scommands = sorted(cmd.commands, key=lambda cmd: cmd.name)
-                    options = [f"{scmd.name} {scmd.signature}"
-                               for scmd in scommands]
+                    options = [f"{scmd.name} {scmd.signature}" for scmd in scommands]
                     slen_max = max(len(opt) for opt in options)
-                    r += "\n".join(f"    - {pref}{command} "
-                                   f"{opt.ljust(slen_max)}  {scmd.short_doc}"
-                                   for scmd, opt in zip(scommands, options))
+                    r += "\n".join(
+                        f"    - {pref}{command} " f"{opt.ljust(slen_max)}  {scmd.short_doc}"
+                        for scmd, opt in zip(scommands, options)
+                    )
                 else:
                     r = f"{pref}{command} {cmd.signature} – {doc}"
 
-                if cmd.aliases:         # Si la commande a des alias
+                if cmd.aliases:  # Si la commande a des alias
                     r += f"\n\nAlias : {pref}" + f", {pref}".join(cmd.aliases)
 
             else:
-                r = (f"Commande '{pref}{command}' non trouvée.\n"
-                     f"Utilise '{pref}help' pour la liste des commandes.")
+                r = f"Commande '{pref}{command}' non trouvée.\n" f"Utilise '{pref}help' pour la liste des commandes."
 
-        r += ("\n\nSi besoin, n'hésite pas à appeler un MJ "
-              "en les mentionnant (@MJ).")
+        r += "\n\nSi besoin, n'hésite pas à appeler un MJ en les mentionnant (@MJ)."
 
         await tools.send_code_blocs(ctx, r, sep="\n\n")
         # On envoie, en séparant enntre les cogs de préférence
-
 
     @commands.command(aliases=["about", "copyright", "licence", "auteurs"])
     async def apropos(self, ctx):
@@ -312,38 +299,44 @@ class Special(commands.Cog):
 
         N'hésitez-pas à nous contacter pour en savoir plus !
         """
-        embed = discord.Embed(
-            title=f"**LG-bot** - v{__version__}",
-            description=config.bot.description
-        ).set_author(
-            name="À propos de ce bot :",
-            icon_url=config.bot.user.avatar_url,
-        ).set_image(
-            url=("https://gist.githubusercontent.com/loic-simon/"
-                 "66c726053323017dba67f85d942495ef/raw/"
-                 "48f2607a61f3fc1b7285fd64873621035c6fbbdb/logo_espci.png"),
-        ).add_field(
-            name="Auteurs",
-            value="Loïc Simon\nTom Lacoma",
-            inline=True,
-        ).add_field(
-            name="Licence",
-            value="Projet open-source sous licence MIT\n"
-                  "https://opensource.org/licenses/MIT",
-            inline=True,
-        ).add_field(
-            name="Pour en savoir plus :",
-            value="https://github.com/loic-simon/lg-rez",
-            inline=False,
-        ).add_field(
-            name="Copyright :",
-            value=":copyright: 2022 Club BD-Jeux × GRIs – ESPCI Paris - PSL",
-            inline=False,
-        ).set_footer(
-            text="Retrouvez-nous sur Discord : LaCarpe#1674, TaupeOrAfk#3218",
+        embed = (
+            discord.Embed(title=f"**LG-bot** - v{__version__}", description=config.bot.description)
+            .set_author(
+                name="À propos de ce bot :",
+                icon_url=config.bot.user.avatar_url,
+            )
+            .set_image(
+                url=(
+                    "https://gist.githubusercontent.com/loic-simon/"
+                    "66c726053323017dba67f85d942495ef/raw/"
+                    "48f2607a61f3fc1b7285fd64873621035c6fbbdb/logo_espci.png"
+                ),
+            )
+            .add_field(
+                name="Auteurs",
+                value="Loïc Simon\nTom Lacoma",
+                inline=True,
+            )
+            .add_field(
+                name="Licence",
+                value="Projet open-source sous licence MIT\nhttps://opensource.org/licenses/MIT",
+                inline=True,
+            )
+            .add_field(
+                name="Pour en savoir plus :",
+                value="https://github.com/loic-simon/lg-rez",
+                inline=False,
+            )
+            .add_field(
+                name="Copyright :",
+                value=":copyright: 2021 Club BD-Jeux × GRIs – ESPCI Paris - PSL",
+                inline=False,
+            )
+            .set_footer(
+                text="Retrouvez-nous sur Discord : LaCarpe#1674, TaupeOrAfk#3218",
+            )
         )
         await ctx.send(embed=embed)
-
 
     @commands.command()
     @commands.check(lambda ctx: not config.is_setup)
@@ -368,9 +361,7 @@ class Special(commands.Cog):
             if roles[slug]:
                 continue
             if isinstance(role["permissions"], list):
-                perms = discord.Permissions(
-                    **{perm: True for perm in role["permissions"]}
-                )
+                perms = discord.Permissions(**{perm: True for perm in role["permissions"]})
             else:
                 perms = getattr(discord.Permissions, role["permissions"])()
             roles[slug] = await config.guild.create_role(
@@ -382,16 +373,14 @@ class Special(commands.Cog):
             )
         # Modification @everyone
         roles["@everyone"] = tools.role("@everyone")
-        await roles["@everyone"].edit(permissions=discord.Permissions(
-            **{perm: True for perm in structure["everyone_permissions"]}
-        ))
+        await roles["@everyone"].edit(
+            permissions=discord.Permissions(**{perm: True for perm in structure["everyone_permissions"]})
+        )
         await ctx.send(f"{len(roles)} rôles créés.")
 
         # Assignation rôles
         for member in config.guild.members:
-            await member.add_roles(
-                roles["bot"] if member == config.bot.user else roles["mj"]
-            )
+            await member.add_roles(roles["bot"] if member == config.bot.user else roles["mj"])
 
         # Création catégories et channels
         await ctx.send("Création des salons...")
@@ -403,17 +392,11 @@ class Special(commands.Cog):
                 categs[slug] = await config.guild.create_category(
                     name=categ["name"],
                     overwrites={
-                        roles[role]: discord.PermissionOverwrite(**perms)
-                        for role, perms in categ["overwrites"].items()
-                    }
+                        roles[role]: discord.PermissionOverwrite(**perms) for role, perms in categ["overwrites"].items()
+                    },
                 )
-            for position, (chan_slug, channel) in enumerate(
-                categ["channels"].items()
-            ):
-                channels[chan_slug] = tools.channel(
-                    channel["name"],
-                    must_be_found=False
-                )
+            for position, (chan_slug, channel) in enumerate(categ["channels"].items()):
+                channels[chan_slug] = tools.channel(channel["name"], must_be_found=False)
                 if channels[chan_slug]:
                     continue
                 channels[chan_slug] = await categs[slug].create_text_channel(
@@ -423,31 +406,24 @@ class Special(commands.Cog):
                     overwrites={
                         roles[role]: discord.PermissionOverwrite(**perms)
                         for role, perms in channel["overwrites"].items()
-                    }
+                    },
                 )
-            for position, (chan_slug, channel) in enumerate(
-                categ["voice_channels"].items()
-            ):
-                channels[chan_slug] = tools.channel(
-                    channel["name"],
-                    must_be_found=False
-                )
+            for position, (chan_slug, channel) in enumerate(categ["voice_channels"].items()):
+                channels[chan_slug] = tools.channel(channel["name"], must_be_found=False)
                 if channels[chan_slug]:
                     continue
                 channels[chan_slug] = await categs[slug].create_voice_channel(
                     name=channel["name"],
                     position=position,
                     overwrites={
-                        roles[role]: discord.PermissionOverwrite(**perms)
-                        for role, perms in channel["overwrites"]
-                    }
+                        roles[role]: discord.PermissionOverwrite(**perms) for role, perms in channel["overwrites"]
+                    },
                 )
-        await ctx.send(
-            f"{len(channels)} salons créés dans {len(categs)} catégories."
-        )
+        await ctx.send(f"{len(channels)} salons créés dans {len(categs)} catégories.")
 
         # Création emojis
         await ctx.send("Import des emojis... (oui c'est très long)")
+
         async def _create_emoji(name: str, data: bytes):
             can_use = None
             if restrict := structure["emojis"]["restrict_roles"].get(name):
@@ -500,21 +476,13 @@ class Special(commands.Cog):
             icon=icon_data,
             afk_channel=channels.get(structure["afk_channel"]),
             afk_timeout=int(structure["afk_timeout"]),
-            verification_level=discord.VerificationLevel[
-                structure["verification_level"]
-            ],
-            default_notifications=discord.NotificationLevel[
-                structure["default_notifications"]
-            ],
-            explicit_content_filter=discord.ContentFilter[
-                structure["explicit_content_filter"]
-            ],
+            verification_level=discord.VerificationLevel[structure["verification_level"]],
+            default_notifications=discord.NotificationLevel[structure["default_notifications"]],
+            explicit_content_filter=discord.ContentFilter[structure["explicit_content_filter"]],
             system_channel=channels[structure["system_channel"]],
-            system_channel_flags=discord.SystemChannelFlags(
-                **structure["system_channel_flags"]
-            ),
+            system_channel_flags=discord.SystemChannelFlags(**structure["system_channel_flags"]),
             preferred_locale=structure["preferred_locale"],
-            reason="Guild set up!"
+            reason="Guild set up!",
         )
         await ctx.send(f"Fin de la configuration !")
 

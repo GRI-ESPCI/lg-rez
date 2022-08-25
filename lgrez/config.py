@@ -1,59 +1,50 @@
 """lg-rez / Variables globales
 
-Personalisation de différents paramètres et accès global
+Personnalisation de différents paramètres et accès global
 
 """
 
-import json
-import pkgutil
+import asyncio
 
 import discord
-
-from lgrez.blocs import ready_check, structure
-
-
-#: dict[str, Any]: Structure du serveur utilisée par !setup (serveur,
-#: rôles, salons, emojis). Voir le fichier ```server_structure.json``
-#: (valeur par défaut) pour les possibilités de personnalisation.
-server_structure = json.loads(
-    pkgutil.get_data("lgrez", "server_structure.json")
-)
+from discord.ext import commands
+import sqlalchemy
+import sqlalchemy.orm
+import readycheck
 
 
-#: str: Préfixe des noms des salons de conversation bot.
-private_chan_prefix = "conv-bot-"
+#: Préfixe des noms des salons de conversation bot.
+private_chan_prefix: str = "conv-bot-"
 
-#: str: Nom de la catégorie des conversations bot, pour l'inscription
+#: Nom de la catégorie des conversations bot, pour l'inscription
 #: (sera éventuellement suivi de 2, 3... si plus de 50 joueurs).
-#: Devrait correspondre à au nom de la catégorie correspondante dans
-#: :attr:`server_structure` ``["categories"]``
-private_chan_category_name = None       # Deduced from server_structure
+private_chan_category_name: str = "CONVERSATION BOT"
 
-#: str: Nom de la catégorie des boudoirs
+#: Nom de la catégorie des boudoirs
 #: (sera éventuellement suivi de 2, 3... si plus de 50 boudoirs).
-#: Devrait correspondre à au nom de la catégorie correspondante dans
-#: :attr:`server_structure` ``["categories"]``
-boudoirs_category_name = None           # Deduced from server_structure
+boudoirs_category_name: str = "BOUDOIRS"
 
-#: str: Nom de la catégorie des boudoirs devenus inutiles
+#: Nom de la catégorie des boudoirs devenus inutiles
 #: (sera éventuellement suivi de 2, 3... si plus de 50 boudoirs).
-#: Devrait correspondre à au nom de la catégorie correspondante dans
-#: :attr:`server_structure` ``["categories"]``
-old_boudoirs_category_name = None       # Deduced from server_structure
+old_boudoirs_category_name: str = "CIMETIÈRE DES BOUDOIRS"
 
 
-#: str: Date de début de saison (pour information lors de l'inscription).
-debut_saison = "32 plopembre"
+#: Date de début de saison (pour information lors de l'inscription).
+debut_saison: str = "32 plopembre"
 
-#: bool: Si ``False``, le processus d'insciption ne demandera pas la
+#: Si ``False``, le processus d'inscription ne demandera pas la
 #: chambre des joueurs, qui seront tous inscrits en :attr:`chambre_mj`
 #: (et la chambre ne sera pas indiquée dans ``!vivants``).
-demande_chambre = True
+demande_chambre: bool = True
 
-#: str: Nom par défaut de la :attr:`~.bdd.Joueur.chambre` des joueurs.
-chambre_mj = "[chambre MJ]"
+#: Nom par défaut de la :attr:`~.bdd.Joueur.chambre` des joueurs.
+chambre_mj: str = "[chambre MJ]"
 
-async def additional_inscription_step(member, chan):
+
+async def additional_inscription_step(
+    member: discord.Member,
+    chan: discord.TextChannel,
+) -> bool | None:
     """Coroutine permettant d'ajouter des étapes au processus d'inscription.
 
     Cette coroutine est appelée par :func:`.features.inscription.main`
@@ -62,8 +53,8 @@ async def additional_inscription_step(member, chan):
     valeur, elle continue selon le processus habituel.
 
     Args:
-        member (discord.Member): membre en cours d'inscription.
-        chan (discord.TextChannel): chan perso créé pour l'inscription.
+        member: Membre en cours d'inscription.
+        chan: Chan perso créé pour l'inscription.
 
     Returns:
         Si ``False``, annule l'inscription.
@@ -71,123 +62,123 @@ async def additional_inscription_step(member, chan):
     pass
 
 
-#: bool: Si ``True``, le bot appellera :meth:`.LGBot.i_am_alive` toutes
+#: Si ``True``, le bot appellera :meth:`.LGBot.i_am_alive` toutes
 #: les 60 secondes. Ce n'est pas activé par défaut.
-output_liveness = False
+output_liveness: bool = False
 
 
-#: str: :attr:`~.bdd.Role.slug` du rôle par défaut, attribué aux
+#: :attr:`~.bdd.Role.slug` du rôle par défaut, attribué aux
 #: joueurs lors de l'inscription (renvoyé par :meth:`.bdd.Role.default`).
-#: Doit correspodre à un rôle existant (défini dans le GSheet *Rôles et
+#: Doit correspondre à un rôle existant (défini dans le GSheet *Rôles et
 #: actions*).
-default_role_slug = "nonattr"
+default_role_slug: str = "nonattr"
 
-#: str: :attr:`~.bdd.Camp.slug` du camp par défaut, attribué aux
+#: :attr:`~.bdd.Camp.slug` du camp par défaut, attribué aux
 #: joueurs lors de l'inscription (renvoyé par :meth:`.bdd.Camp.default`).
-#: Doit correspodre à un camp existant (défini dans le GSheet *Rôles et
+#: Doit correspondre à un camp existant (défini dans le GSheet *Rôles et
 #: actions*).
-default_camp_slug = "nonattr"
+default_camp_slug: str = "nonattr"
 
 
-#: str: Nom de la feuille du *Tableau de bord* contenant l'état actuel
+#: Nom de la feuille du *Tableau de bord* contenant l'état actuel
 #: des joueurs, sur laquelle sont effectuées les modifications.
-tdb_main_sheet = "Journée en cours"
+tdb_main_sheet: str = "Journée en cours"
 
-#: str: Nom de la feuille du *Tableau de bord* contenant les résultats
+#: Nom de la feuille du *Tableau de bord* contenant les résultats
 #: des votes (après corrections manuelles éventuelles).
-tdb_votes_sheet = "Journée en cours"
+tdb_votes_sheet: str = "Journée en cours"
 
-#: int: Numéro de la ligne de la feuille principale
+#: Numéro de la ligne de la feuille principale
 #: (:attr:`~lgrez.config.tdb_main_sheet`)
 #: du *Tableau de bord* contenant les noms des colonnes (commençant de 1).
-tdb_header_row = 3
+tdb_header_row: int = 3
 
-#: str: Nom de la colonne de la feuille principale
+#: Nom de la colonne de la feuille principale
 #: (:attr:`~lgrez.config.tdb_main_sheet`)
 #: du *Tableau de bord* contenant les IDs Discord des joueurs.
-tdb_id_column = "A"
+tdb_id_column: str = "A"
 
-#: tuple[str]: Noms de la première et de la dernière colonne de la zone de
+#: Noms de la première et de la dernière colonne de la zone de
 #: la feuille principale (:attr:`~lgrez.config.tdb_main_sheet`) du *Tableau
 #: de bord* contenant les informations (colonnes de la BDD) des joueurs.
-tdb_main_columns = ("J", "Q")
+tdb_main_columns: tuple[str, str] = ("J", "Q")
 
-#: tuple[str]: Noms de la première et de la dernière colonne de la zone de
+#: Noms de la première et de la dernière colonne de la zone de
 #: la feuille principale (:attr:`~lgrez.config.tdb_main_sheet`) du *Tableau
 #: de bord* contenant l'ancien état des informations des joueurs
 #: (avant ``!sync``).
-tdb_tampon_columns = ("B", "I")
+tdb_tampon_columns: tuple[str, str] = ("B", "I")
 
 
-#: int: Nombre maximal de modèles de ciblages (:class:`.bdd.BaseCiblage`)
+#: Nombre maximal de modèles de ciblages (:class:`.bdd.BaseCiblage`)
 #: renseignés pour chaque modèle d'action (:class:`.bdd.BaseAction`), à
 #: droite de la feuille ``baseactions`` du GSheet *Rôles et actions*.
-max_ciblages_per_action = 3
+max_ciblages_per_action: int = 3
 
 
-#: str: :attr:`.bdd.BaseAction.slug` de l'action de base permettant
-#: de modifier un vote (rôle de l'*Intigant* dans le jeu PCéen).
+#: :attr:`.bdd.BaseAction.slug` de l'action de base permettant
+#: de modifier un vote (rôle de l'*Intrigant* dans le jeu PCéen).
 #: Cette baseaction doit avoir deux ciblages de slugs "cible" et "vote".
-modif_vote_baseaction = "modification-vote"
+modif_vote_baseaction: str = "modification-vote"
 
-#: str: :attr:`.bdd.BaseAction.slug` de l'action de base permettant
+#: :attr:`.bdd.BaseAction.slug` de l'action de base permettant
 #: d'ajouter un/des vote(s) (rôle du *Corbeau* dans le jeu PCéen).
-ajout_vote_baseaction = "ajout-vote"
+ajout_vote_baseaction: str = "ajout-vote"
 
-#: int: Nombre de votes ajoutés par l'action :attr:`ajout_vote_baseaction`.
-n_ajouts_votes = 2
+#: Nombre de votes ajoutés par l'action :attr:`ajout_vote_baseaction`.
+n_ajouts_votes: int = 2
 
 
-#: str: Nom de la feuille du GSheet *Données brûtes* où enregistrer
+#: Nom de la feuille du GSheet *Données brûtes* où enregistrer
 #: les votes brutes pour le condamné du jour.
-db_votecond_sheet = "votecond_brut"
+db_votecond_sheet: str = "votecond_brut"
 
-#: str: Nom de la feuille du GSheet *Données brûtes* où enregistrer
+#: Nom de la feuille du GSheet *Données brûtes* où enregistrer
 #: les votes brutes pour le nouveau maire.
-db_votemaire_sheet = "votemaire_brut"
+db_votemaire_sheet: str = "votemaire_brut"
 
-#: str: Nom de la feuille du GSheet *Données brûtes* où enregistrer
+#: Nom de la feuille du GSheet *Données brûtes* où enregistrer
 #: les votes brutes pour le vote des loups.
-db_voteloups_sheet = "voteloups_brut"
+db_voteloups_sheet: str = "voteloups_brut"
 
-#: str: Nom de la feuille du GSheet *Données brûtes* où enregistrer
+#: Nom de la feuille du GSheet *Données brûtes* où enregistrer
 #: les actions effectuées.
-db_actions_sheet = "actions_brut"
+db_actions_sheet: str = "actions_brut"
 
 
-#: list[str]: Mots-clés (en minuscule) utilisables (quelque soit la casse)
+#: Mots-clés (en minuscule) utilisables (quelque soit la casse)
 #: pour arrêter une commande en cours d'exécution.
-stop_keywords = ["stop", "!stop"]
+stop_keywords: list[str] = ["stop", "!stop"]
 
 
-#: list[str]: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
+#: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
 #: permettant de recharger une action à son nombre de charges initial.
-refills_full = ["weekends"]
+refills_full: list[str] = ["weekends"]
 
-#: list[str]: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
+#: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
 #: permettant de recharger une action de une charge.
-refills_one = ["forgeron", "rebouteux", "divin"]
+refills_one: list[str] = ["forgeron", "rebouteux", "divin"]
 
-#: list[str]: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
+#: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
 #: à utiliser par le MJ pour ajouter une charge à une action.
-refills_divins = ["divin"]
+refills_divins: list[str] = ["divin"]
 
 
-#: bool: Indique si le bot est prêt (:meth:`.LGBot.on_ready` appelé)
-#: N'est pas concu pour être changé manuellement.
-is_ready = False
+#: Indique si le bot est prêt (:meth:`.LGBot.on_ready` appelé)
+#: N'est pas conçu pour être changé manuellement.
+is_ready: bool = False
 
 #: bool: Indique si le serveur est construit (``!setup`` appelé)
 #: N'est pas conçu pour être changé manuellement.
 is_setup = True
 
 
-class Role(ready_check.ReadyCheck, check_type=discord.Role):
+class Role(readycheck.ReadyCheck, check_type=discord.Role):
     """Rôles Discord nécessaires au jeu
 
-    Cette classe dérive de :class:`.ready_check.ReadyCheck` :
+    Cette classe dérive de :class:`readycheck.ReadyCheck` :
     accéder aux attributs ci-dessous avant que le bot ne soit connecté
-    au serveur lève une :exc:`~.ready_check.NotReadyError`.
+    au serveur lève une :exc:`~readycheck.NotReadyError`.
 
     Plus précisément, :meth:`.LGBot.on_ready` remplace le nom du rôle
     par l'objet :class:`discord.Role` correspondant : si les noms des
@@ -216,21 +207,21 @@ class Role(ready_check.ReadyCheck, check_type=discord.Role):
             est ce rôle (ou moins) seront ignorés par le bot.
             Nom par défaut: "@everyone" (rôle Discord de base)
     """
-    # Default attributes values will be deduced from server_structure.
-    mj = None
-    redacteur = None
-    joueur_en_vie = None
-    joueur_mort = None
-    maire = None
+
+    mj = "MJ"
+    redacteur = "Rédacteur"
+    joueur_en_vie = "Joueur en vie"
+    joueur_mort = "Joueur mort"
+    maire = "Maire"
     everyone = "@everyone"
 
 
-class Channel(ready_check.ReadyCheck, check_type=discord.TextChannel):
+class Channel(readycheck.ReadyCheck, check_type=discord.TextChannel):
     """Salons Discord nécessaires au jeu
 
-    Cette classe dérive de :class:`.ready_check.ReadyCheck` : accéder
+    Cette classe dérive de :class:`readycheck.ReadyCheck` : accéder
     aux attributs ci-dessous avant que le bot ne soit connecté au
-    serveur lève une :exc:`~.ready_check.NotReadyError`.
+    serveur lève une :exc:`~readycheck.NotReadyError`.
 
     Plus précisément, :meth:`.LGBot.on_ready` remplace le nom du rôle
     par l'objet :class:`discord.TextChannel` correspondant : si les noms
@@ -254,20 +245,20 @@ class Channel(ready_check.ReadyCheck, check_type=discord.TextChannel):
         debats: Salon de discussion principal (catégorie Place du village).
             Nom par défaut : "débats".
     """
-    # Default attributes values will be deduced from server_structure.
-    roles = None
-    logs = None
-    annonces = None
-    haros = None
-    debats = None
+
+    roles = "rôles"
+    logs = "logs"
+    annonces = "annonces"
+    haros = "haros"
+    debats = "débats"
 
 
-class Emoji(ready_check.ReadyCheck, check_type=discord.Emoji):
+class Emoji(readycheck.ReadyCheck, check_type=discord.Emoji):
     """Emojis Discord nécessaires au jeu
 
-    Cette classe dérive de :class:`.ready_check.ReadyCheck` : accéder
+    Cette classe dérive de :class:`readycheck.ReadyCheck` : accéder
     aux attributs ci-dessous avant que le bot ne soit connecté au
-    serveur lève une :exc:`~.ready_check.NotReadyError`.
+    serveur lève une :exc:`~readycheck.NotReadyError`.
 
     Plus précisément, :meth:`.LGBot.on_ready` remplace le nom du rôle
     par l'objet :class:`discord.Emoji` correspondant : si les noms
@@ -288,58 +279,30 @@ class Emoji(ready_check.ReadyCheck, check_type=discord.Emoji):
         action: Représente les actions de rôle
         void: Image vide, pour séparations verticales et autres filouteries
     """
-    # Default attributes values will be deduced from server_structure.
-    ha = None
-    ro = None
-    bucher = None
-    maire = None
-    action = None
-    lune = None
-    void = None
+
+    ha = "ha"
+    ro = "ro"
+    bucher = "bucher"
+    maire = "maire"
+    action = "action"
+    lune = "lune"
+    void = "void"
 
 
-def set_config_from_server_structure():
-    """Deduce some configuration values from server structure.
-
-    Call this function after customizing :attr:`.server_structure`,
-    but BEFORE launching the bot! Should never be called at runtime.
-    """
-    global private_chan_category_name
-    global boudoirs_category_name
-    global old_boudoirs_category_name
-
-    structure.check_server_structure(server_structure, Role, Channel, Emoji)
-
-    categories = server_structure["categories"]
-    private_chan_category_name = categories["private_chan"]["name"]
-    boudoirs_category_name = categories["boudoirs"]["name"]
-    old_boudoirs_category_name = categories["old_boudoirs"]["name"]
-    for role in Role:
-        if role == "everyone":
-            continue
-        setattr(Role, role, server_structure["roles"][role]["name"])
-    if (base_role := server_structure["base_role"]) == "@everyone":
-        Role.everyone = "@everyone"
-    else:
-        Role.everyone = server_structure["roles"][base_role]["name"]
-    for channel in Channel:
-        setattr(Channel, channel, next(chan
-            for categ in categories.values()
-            for slug, chan in categ["channels"].items()
-            if slug == channel
-        )["name"]
-    )
-    for emoji in Emoji:
-        setattr(Emoji, emoji, server_structure["emojis"]["required"][emoji])
-
-set_config_from_server_structure()      # First deduction at import time
+guild: discord.Guild
+bot: commands.Bot
+loop: asyncio.AbstractEventLoop
+engine: sqlalchemy.engine.Engine
+session: sqlalchemy.orm.Session
+webhook: discord.Webhook
 
 
-class _ModuleGlobals(ready_check.ReadyCheck):
+class _ModuleGlobals(readycheck.ReadyCheck):
     """Module-level attributes with not-None ReadyCheck
 
     (attributes accessed by __getattr__, documented directly in config.rst)
     """
+
     guild = None
     bot = None
     loop = None
@@ -358,6 +321,4 @@ def __getattr__(attr):
     try:
         return getattr(_ModuleGlobals, attr)
     except AttributeError:
-        raise AttributeError(
-            f"module '{__name__}' has no attribute '{attr}'"
-        ) from None
+        raise AttributeError(f"module '{__name__}' has no attribute '{attr}'") from None

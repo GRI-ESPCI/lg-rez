@@ -17,6 +17,7 @@ from lgrez.bdd import Joueur, Role, Camp
 
 class Annexe(commands.Cog):
     """Commandes annexes aux usages divers"""
+
     next_roll = None
 
     @commands.command()
@@ -55,8 +56,7 @@ class Annexe(commands.Cog):
         elif inp in ["camp", "camps"]:
             result = random.choice(Camp.query.filter_by(public=True).all()).nom
         elif inp in ["ludo", "ludopathe"]:
-            result = random.choice(["Voyante", "Protecteur", "Notaire",
-                                    "Popo de mort", "Chat-garou", "Espion"])
+            result = random.choice(["Voyante", "Protecteur", "Notaire", "Popo de mort", "Chat-garou", "Espion"])
         elif inp in ["taverne", "tavernier"]:
             result = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
 
@@ -82,9 +82,7 @@ class Annexe(commands.Cog):
                     if faces < 1:
                         raise ValueError
                 except ValueError:
-                    raise commands.UserInputError(
-                        f"Pattern de dé non reconu : {part}"
-                    )
+                    raise commands.UserInputError(f"Pattern de dé non reconu : {part}")
                 # Sécurité
                 if abs(nb) > 1000 or faces > 1000000:
                     await ctx.reply(
@@ -111,9 +109,7 @@ class Annexe(commands.Cog):
                 try:
                     val = int(part)
                 except ValueError:
-                    raise commands.UserInputError(
-                        f"Pattern fixe non reconu : {part}"
-                    )
+                    raise commands.UserInputError(f"Pattern fixe non reconu : {part}")
                 sum += val
                 rep += f" {'-' if val < 0 else '+'} {abs(val)}"
         # Total
@@ -122,18 +118,6 @@ class Annexe(commands.Cog):
         rep = rep[3:] if rep.startswith(" +") else rep
         await tools.send_blocs(ctx, rep)
 
-
-    @commands.command()
-    @tools.mjs_only
-    async def nextroll(self, ctx, *, next=None):
-        """✨ Shhhhhhhhhhhh.
-
-        Ça sent la magouilleuh
-        """
-        self.next_roll = next
-        await ctx.message.add_reaction("🤫")
-
-
     @commands.command(aliases=["cf", "pf"])
     async def coinflip(self, ctx):
         """Renvoie le résultat d'un tirage à Pile ou Face (aléatoire)
@@ -141,7 +125,6 @@ class Annexe(commands.Cog):
         Pile je gagne, face tu perds.
         """
         await ctx.send(random.choice(["Pile", "Face"]))
-
 
     @commands.command(aliases=["pong"])
     async def ping(self, ctx):
@@ -160,12 +143,9 @@ class Annexe(commands.Cog):
         pingpong = pingpong.replace("x", "o").replace("X", "O")
 
         cont = (
-            f" Réception : {delta_rec.total_seconds()*1000:4.0f} ms\n"
-            f" Latence :   {ctx.bot.latency*1000:4.0f} ms\n"
+            f" Réception : {delta_rec.total_seconds()*1000:4.0f} ms\n" f" Latence :   {ctx.bot.latency*1000:4.0f} ms\n"
         )
-        mess = await ctx.send(
-            f"!{pingpong}\n" + tools.code_bloc(cont + " (...)")
-        )
+        mess = await ctx.send(f"!{pingpong}\n" + tools.code_bloc(cont + " (...)"))
 
         ts_ret = datetime.datetime.utcnow()
         delta_ret = ts_ret - mess.created_at
@@ -176,14 +156,15 @@ class Annexe(commands.Cog):
         delta_tot = delta_rec + delta_ret + delta_env
         # Total = temps entre création message !pong et réception information
         # réponse envoyée
-        await mess.edit(content=f"!{pingpong}\n" + tools.code_bloc(
-            cont +
-            f" Envoi :     {delta_env.total_seconds()*1000:4.0f} ms\n"
-            f" Retour :    {delta_ret.total_seconds()*1000:4.0f} ms\n"
-            f"——————————————————————\n"
-            f" Total :     {delta_tot.total_seconds()*1000:4.0f} ms"
-        ))
-
+        await mess.edit(
+            content=f"!{pingpong}\n"
+            + tools.code_bloc(
+                cont + f" Envoi :     {delta_env.total_seconds()*1000:4.0f} ms\n"
+                f" Retour :    {delta_ret.total_seconds()*1000:4.0f} ms\n"
+                f"——————————————————————\n"
+                f" Total :     {delta_tot.total_seconds()*1000:4.0f} ms"
+            )
+        )
 
     @commands.command()
     async def akinator(self, ctx):
@@ -212,10 +193,7 @@ class Annexe(commands.Cog):
         exit = False
         while not exit and aki.progression <= 80:
             mess = await ctx.send(f"({aki.step + 1}) {question}")
-            reponse = await tools.wait_for_react_clic(
-                mess,
-                {"👍": "yes", "🤷": "idk", "👎": "no", "⏭️": "stop"}
-            )
+            reponse = await tools.wait_for_react_clic(mess, {"👍": "yes", "🤷": "idk", "👎": "no", "⏭️": "stop"})
             if reponse == "stop":
                 exit = True
             else:
@@ -231,16 +209,9 @@ class Annexe(commands.Cog):
             f"J'ai bon ?\n{aki.first_guess['absolute_picture_path']}"
         )
         if await tools.yes_no(mess):
-            await ctx.send(
-                "Yay\nhttps://fr.akinator.com/bundles/elokencesite"
-                "/images/akitudes_670x1096/triomphe.png"
-            )
+            await ctx.send("Yay\nhttps://fr.akinator.com/bundles/elokencesite/images/akitudes_670x1096/triomphe.png")
         else:
-            await ctx.send(
-                "Oof\nhttps://fr.akinator.com/bundles/elokencesite"
-                "/images/akitudes_670x1096/deception.png"
-            )
-
+            await ctx.send("Oof\nhttps://fr.akinator.com/bundles/elokencesite/images/akitudes_670x1096/deception.png")
 
     @commands.command()
     async def xkcd(self, ctx, N):
