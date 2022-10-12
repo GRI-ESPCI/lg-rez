@@ -17,7 +17,7 @@ internationalization is available at this time.*
 Tout ce qui suit est du blabla READMEsque peu intéressant.
 
 Pour les trucs intéressants, c'est-à-dire les instructions pour lancer une 
-nouvelle saison, voir [`Nouvelle saison.md`](Nouvelle saison.md).
+nouvelle saison, voir [`Nouvelle saison.md`](Nouvelle%20saison.md).
 
 
 ## What's New in LG-Rez
