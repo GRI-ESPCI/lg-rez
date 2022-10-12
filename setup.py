@@ -2,7 +2,7 @@ import re
 import setuptools
 
 
-repo_url = "https://github.com/loic-simon/lg-rez"
+repo_url = "https://github.com/GRI-ESPCI/lg-rez"
 
 version = ""
 with open("lgrez/__init__.py") as f:

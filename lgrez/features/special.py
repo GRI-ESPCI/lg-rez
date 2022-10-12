@@ -160,7 +160,7 @@ async def apropos(journey: DiscordJourney):
     )
     embed.add_field(name="Auteurs", value="Loïc Simon\nTom Lacoma")
     embed.add_field(name="Licence", value="Projet open-source sous licence MIT\nhttps://opensource.org/licenses/MIT")
-    embed.add_field(name="Pour en savoir plus :", value="https://github.com/loic-simon/lg-rez", inline=False)
+    embed.add_field(name="Pour en savoir plus :", value="https://github.com/GRI-ESPCI/lg-rez", inline=False)
     embed.add_field(name="Copyright :", value=":copyright: 2022 Club BD-Jeux × GRIs – ESPCI Paris - PSL", inline=False)
     embed.set_footer(text="Retrouvez-nous sur Discord : LaCarpe#1674, TaupeOrAfk#3218")
 
