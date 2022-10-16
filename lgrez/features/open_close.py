@@ -185,8 +185,10 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
             haro_command = None
 
     # Activation commande de vote
-    if config.bot.tree.enable_command(vote_command) or (haro_command and config.bot.tree.enable_command(haro_command)):
-        await config.bot.tree.sync(guild=config.guild)
+    config.bot.tree.enable_command(vote_command)
+    if haro_command:
+        config.bot.tree.enable_command(haro_command)
+    await config.bot.tree.sync(guild=config.guild)
 
     # Création utilisations & envoi messages
     for joueur in joueurs:
@@ -345,8 +347,10 @@ async def close_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = 
             haro_command = None
 
     # Activation commande de vote
-    if config.bot.tree.disable_command(vote_command) or (haro_command and config.bot.tree.enable_command(haro_command)):
-        await config.bot.tree.sync(guild=config.guild)
+    config.bot.tree.disable_command(vote_command)
+    if haro_command:
+        config.bot.tree.enable_command(haro_command)
+    await config.bot.tree.sync(guild=config.guild)
 
     # Fermeture utilisations et envoi messages
     for joueur in joueurs:

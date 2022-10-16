@@ -121,6 +121,9 @@ class LGCommandTree(app_commands.CommandTree):
             interaction: Interaction ayant causé l'exception
             error: Exception levée
         """
+        if interaction.guild != config.guild:
+            return
+
         message = "Strange Exception"
 
         running_interaction = DiscordJourney.RUNNING_INTERACTION or interaction
