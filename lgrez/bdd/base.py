@@ -7,15 +7,19 @@ Métaclasse et classe de base des tables de données, fonction de connection
 from __future__ import annotations
 
 from collections import abc
+import enum
+import json
 import re
 import difflib
 import typing
+import discord
 
 import sqlalchemy
 import sqlalchemy.orm
 import unidecode
 
 from lgrez import config
+from lgrez.bdd import enums
 from lgrez.blocs import env
 
 
@@ -508,6 +512,47 @@ def autodoc_ManyToMany(tablename: str, *args, doc: str = "", **kwargs) -> sqlalc
 # ---- Connection function
 
 
+class _DiscordObjectsEncoder(json.JSONEncoder):
+    def default(self, obj):
+        match obj:
+            case discord.abc.GuildChannel() | discord.app_commands.AppCommandChannel():
+                return {"__discord_type__": "channel", "__discord_id__": obj.id}
+            case discord.Member():
+                return {"__discord_type__": "member", "__discord_id__": obj.id}
+            case discord.Role():
+                return {"__discord_type__": "role", "__discord_id__": obj.id}
+            case enum.Enum():
+                return {"__discord_type__": "enum", "__enum_class__": obj.__class__.__name__, "__enum_name__": obj.name}
+            case _:
+                # Let the base class default method raise the TypeError
+                return super().default(obj)
+
+
+class _DiscordObjectsDecoder(json.JSONDecoder):
+    def __init__(
+        self, *, object_hook: typing.Callable[[dict[str, typing.Any]], typing.Any] | None = None, **kwargs
+    ) -> None:
+        self._object_hook = object_hook or (lambda dic: dic)
+        super().__init__(object_hook=self.discord_object_hook, **kwargs)
+
+    def discord_object_hook(self, dic: dict[str, typing.Any]):
+        object_id = dic.get("__discord_id__", 0)
+        match dic.get("__discord_type__"):
+            case None:
+                return self._object_hook(dic)
+            case "channel":
+                return config.guild.get_channel(object_id)
+            case "member":
+                return config.guild.get_member(object_id)
+            case "role":
+                return config.guild.get_role(object_id)
+            case "enum":
+                enum_class = getattr(enums, dic.get("__enum_class__"))
+                return enum_class[dic.get("__enum_name__")]
+            case other:
+                raise ValueError(f"Unhandled __discord_type__ in custom JSON: {other}")
+
+
 def connect() -> None:
     """Se connecte à la base de données et prépare les objets connectés.
 
@@ -517,7 +562,12 @@ def connect() -> None:
     """
     LGREZ_DATABASE_URI = env.load("LGREZ_DATABASE_URI")
     # Moteur SQL : connexion avec le serveur
-    config.engine = sqlalchemy.create_engine(LGREZ_DATABASE_URI, pool_pre_ping=True)
+    config.engine = sqlalchemy.create_engine(
+        LGREZ_DATABASE_URI,
+        pool_pre_ping=True,
+        json_serializer=_DiscordObjectsEncoder().encode,
+        json_deserializer=_DiscordObjectsDecoder().decode,
+    )
 
     # Création des tables si elles n'existent pas déjà
     TableBase.metadata.create_all(config.engine)

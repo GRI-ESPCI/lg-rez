@@ -35,7 +35,7 @@ Le bot devrait alors changer de serveur et devrait alors poster un message dans 
 - Stop le bot : `sudo supervisorctl stop lgrez`
 - Vider les tables de saison, et celles qui seront remplies plus tard par `/fillroles` :
   ```
-  psql -d lgrez -c 'TRUNCATE joueurs, bouderies, boudoirs, taches, camps, baseactions, _baseactions_roles, ciblages, utilisations, actions RESTART IDENTITY CASCADE;'
+  psql -d lgrez -c 'DROP joueurs, bouderies, boudoirs, taches, camps, baseactions, _baseactions_roles, ciblages, utilisations, actions RESTART IDENTITY CASCADE;'
   ```
 
 ## Setup du serveur

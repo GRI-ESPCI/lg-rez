@@ -159,10 +159,10 @@ class LGCommandTree(app_commands.CommandTree):
                     f"Utilise {tools.code('!help')} pour voir la liste des commandes."
                 )
 
-            case app_commands.MissingRole() if error.missing_role == config.Role.get_raw("mj"):
+            case app_commands.MissingRole() if error.missing_role == config.Role.mj.name:
                 message = ":x: Hé ho toi, cette commande est réservée aux MJs !  :angry:"
 
-            case app_commands.MissingRole() if error.missing_role == config.Role.get_raw("joueur_en_vie"):
+            case app_commands.MissingRole() if error.missing_role == config.Role.joueur_en_vie.name:
                 message = ":x: Désolé, cette commande est réservée aux joueurs en vie !"
 
             case app_commands.MissingAnyRole():

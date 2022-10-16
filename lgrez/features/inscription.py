@@ -186,7 +186,7 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
         "Très bien !\nD'abord, un point règles nécessaire :\n\n"
         + tools.quote_bloc(
             "En t'inscrivant au Loup-Garou de la Rez, tu garantis vouloir participer à cette édition et "
-            "t'engages à respecter les règles du jeu. Si tu venais à entraver le bon déroulement de la partie"
+            "t'engages à respecter les règles du jeu. Si tu venais à entraver le bon déroulement de la partie "
             "pour une raison ou une autre, les MJ s'autorisent à te mute ou t'expulser du Discord sans préavis."
         )
     )

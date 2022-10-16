@@ -164,7 +164,7 @@ async def ping(journey: DiscordJourney):
     delta_tot = delta_rec + delta_ret + delta_env
     # Total = temps entre création message !pong et réception information réponse envoyée
     await mess.edit(
-        content=f"!pong\n"
+        content=f"/pong\n"
         + tools.code_bloc(
             cont + f" Envoi :     {delta_env.total_seconds()*1000:4.0f} ms\n"
             f" Retour :    {delta_ret.total_seconds()*1000:4.0f} ms\n"

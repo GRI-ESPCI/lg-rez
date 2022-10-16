@@ -20,9 +20,6 @@ from lgrez.features import gestion_ia, inscription
 
 
 async def _check_and_prepare_objects(bot: LGBot) -> None:
-    # Start admin console in the background
-    asyncio.create_task(console.run_admin_console(globals()))
-
     if not config.is_setup:
         return
 
@@ -37,13 +34,13 @@ async def _check_and_prepare_objects(bot: LGBot) -> None:
 
     def prepare_attributes(
         rc_class: type[readycheck.ReadyCheck],
-        discord_type: type,
+        discord_type: type[discord.abc.Snowflake],
         converter: typing.Callable[[str], typing.Any],
     ) -> None:
         """Rend prêt les attributs d'une classe ReadyCheck"""
         for attr in rc_class:
             raw = rc_class.get_raw(attr)
-            # Si déjà prêt, on actualise quand même (reconnexion)
+            # Si déjà prêt, on actualise quand même (reconnexion, update...)
             name = raw.name if isinstance(raw, discord_type) else raw
             try:
                 ready = converter(name)
@@ -208,6 +205,9 @@ class LGBot(discord.Client):
         if config.output_liveness:
             self.i_am_alive()
 
+        # Start admin console in the background
+        asyncio.create_task(console.run_admin_console(globals()))
+
         # Préparations des objects globaux
         await self.check_and_prepare_objects()
 
@@ -311,23 +311,42 @@ class LGBot(discord.Client):
         # On remonte l'exception à Python (pour log, ne casse pas la loop)
         raise
 
-    async def on_guild_update(self, always: bool = False) -> None:
-        """Méthode appelée lors de la modification du serveur.
+    async def on_guild_channel_delete(self, channel: discord.TextChannel) -> None:
+        if channel.guild == config.guild:
+            await self.check_and_prepare_objects()
 
-        Ex : création/modification/suppression d'un chan, d'un emoji...
-        Vérifie que cette modification n'impacte pas le bon fonctionnement
-            du jeu.
+    async def on_guild_channel_update(self, before: discord.TextChannel, after: discord.TextChannel) -> None:
+        if before.guild == config.guild and config._missing_objects:
+            await self.check_and_prepare_objects()
 
-        Args:
-            always: Si ``True``, force une re-vérification de tous les
-                objets (suppression) ; sinon, ne revérifie que si un
-                objet était manquant, pour corriger l'information.
-        """
-        if always or config._missing_objects:
+    async def on_guild_channel_create(self, channel: discord.TextChannel) -> None:
+        if channel.guild == config.guild and config._missing_objects:
+            await self.check_and_prepare_objects()
+
+    async def on_guild_role_delete(self, role: discord.Role) -> None:
+        if role.guild == config.guild:
+            await self.check_and_prepare_objects()
+
+    async def on_guild_role_update(self, before: discord.Role, after: discord.Role) -> None:
+        if before.guild == config.guild and config._missing_objects:
+            await self.check_and_prepare_objects()
+
+    async def on_guild_role_create(self, role: discord.Role) -> None:
+        if role.guild == config.guild and config._missing_objects:
+            await self.check_and_prepare_objects()
+
+    async def on_guild_emojis_update(
+        self, guild: discord.Guild, before: list[discord.Emoji], after: list[discord.Emoji]
+    ) -> None:
+        if guild == config.guild:
+            await self.check_and_prepare_objects()
+
+    async def on_webhooks_update(self, channel: discord.TextChannel) -> None:
+        if channel == config.Channel.logs:
             await self.check_and_prepare_objects()
 
     # Checks en temps réels des modifs des objets nécessaires au bot
-    async def check_and_prepare_objects(self):
+    async def check_and_prepare_objects(self) -> None:
         """Vérifie et prépare les objets Discord nécessaires au bot.
 
         Remplit :class:`.config.Role`, :class:`.config.Channel`,
