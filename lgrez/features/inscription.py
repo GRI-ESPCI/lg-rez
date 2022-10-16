@@ -276,7 +276,7 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
     await chan.send(
         "Juste quelques dernières choses :\n "
         "- Plein de commandes te sont d'ores et déjà accessibles ! "
-        f"Découvre les toutes en tapant {tools.code('/help')} ;\n "
+        f"Découvre les toutes en tapant `/` dans la zone d'envoi de messages ;\n"
         f"- Si tu as besoin d'aide, mentionne simplement les MJs ({tools.code('@' + config.Role.mj.name)}) "
         "et on viendra voir ce qui se passe !\n "
         "- Si ce n'est pas le cas, je te conseille fortement d'installer Discord sur ton téléphone, et "
