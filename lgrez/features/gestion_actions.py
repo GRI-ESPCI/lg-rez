@@ -261,14 +261,14 @@ def get_actions(
     Returns:
         La liste des actions correspondantes.
     """
-    filter = Action.active.is_(True)
+    filter = Action.active.is_(True).join(Action.base)
 
     if quoi == "open":
-        filter &= Action.base.has(trigger_debut=trigger) & ~Action.is_open
+        filter &= (BaseAction.trigger_debut == trigger) & ~Action.is_open
     elif quoi == "close":
-        filter &= Action.base.has(trigger_fin=trigger) & Action.is_open
+        filter &= (BaseAction.trigger_fin == trigger) & Action.is_open
     elif quoi == "remind":
-        filter &= Action.base.has(trigger_fin=trigger) & Action.is_waiting
+        filter &= (BaseAction.trigger_fin == trigger) & Action.is_waiting
     else:
         raise commons.UserInputError("quoi", f"bad value: '{quoi}'")
 
@@ -277,8 +277,8 @@ def get_actions(
             raise commons.UserInputError("quand", "merci de préciser une heure")
 
         if quoi == "open":
-            filter &= Action.base.has(heure_debut=heure)
+            filter &= BaseAction.heure_debut == heure
         else:  # close / remind
-            filter &= Action.base.has(heure_fin=heure)
+            filter &= BaseAction.heure_fin == heure
 
     return Action.query.filter(filter).all()

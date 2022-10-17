@@ -123,6 +123,7 @@ DESCRIPTION = """Commandes de gestion des votes et actions"""
 
 
 open = app_commands.Group(name="open", description="Ouvrir quelque chose")
+open = tools.mjs_only(open)
 
 
 @open.command(name="vote")
@@ -207,10 +208,10 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
 
     # Actions déclenchées par ouverture
     if isinstance(qui, Vote):
-        for action in Action.query.filter(Action.base.has(BaseAction.trigger_debut == ActionTrigger.open(qui))):
+        for action in Action.query.join(Action.base).filter(BaseAction.trigger_debut == ActionTrigger.open(qui)):
             await gestion_actions.open_action(action)
 
-        for action in Action.query.filter(Action.base.has(BaseAction.trigger_fin == ActionTrigger.open(qui))):
+        for action in Action.query.join(Action.base).filter(BaseAction.trigger_fin == ActionTrigger.open(qui)):
             await gestion_actions.close_action(action)
 
     # Réinitialise haros/candids
@@ -294,6 +295,7 @@ async def open_action(journey: DiscordJourney, id: int):
 
 
 close = app_commands.Group(name="close", description="Clôturer quelque chose")
+close = tools.mjs_only(close)
 
 
 @close.command(name="vote")
@@ -330,19 +332,19 @@ async def close_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = 
     match qui:
         case Vote.cond:
             content = (
-                f"{tools.montre()}  Fin du vote pour le condamné du jour !\nVote définitif : {nom_cible}\n"
+                f"{tools.montre()}  Fin du vote pour le condamné du jour !\nVote définitif : {{nom_cible}}\n"
                 f"Les résultats arrivent dans l'heure !\n"
             )
             vote_command = "vote"
             haro_command = "haro"
 
         case Vote.maire:
-            content = f"{tools.montre()}  Fin du vote pour le maire ! \nVote définitif : {nom_cible}"
+            content = f"{tools.montre()}  Fin du vote pour le maire ! \nVote définitif : {{nom_cible}}"
             vote_command = "votemaire"
             haro_command = "candid"
 
         case Vote.loups:
-            content = f"{tools.montre()}  Fin du vote pour la victime du soir !\nVote définitif : {nom_cible}"
+            content = f"{tools.montre()}  Fin du vote pour la victime du soir !\nVote définitif : {{nom_cible}}"
             vote_command = "voteloups"
             haro_command = None
 
@@ -365,16 +367,16 @@ async def close_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = 
 
             util.close()  # update direct pour empêcher de voter
 
-        await chan.send(content)
+        await chan.send(content.format(nom_cible=nom_cible))
 
     config.session.commit()
 
     # Actions déclenchées par fermeture
     if isinstance(qui, Vote):
-        for action in Action.query.filter(Action.base.has(BaseAction.trigger_debut == ActionTrigger.close(qui))):
+        for action in Action.query.join(Action.base).filter(BaseAction.trigger_debut == ActionTrigger.close(qui)):
             await gestion_actions.open_action(action)
 
-        for action in Action.query.filter(Action.base.has(BaseAction.trigger_fin == ActionTrigger.close(qui))):
+        for action in Action.query.join(Action.base).filter(BaseAction.trigger_fin == ActionTrigger.close(qui)):
             await gestion_actions.close_action(action)
 
     # Programme prochaine ouverture
@@ -444,6 +446,7 @@ async def close_action(journey: DiscordJourney, id: int):
 
 
 remind = app_commands.Group(name="remind", description="Rappeler quelque chose")
+remind = tools.mjs_only(remind)
 
 
 @remind.command(name="vote")
@@ -637,9 +640,11 @@ async def cparti(journey: DiscordJourney):
 
     # Programmation actions au lancement et actions permanentes
     rep += "\nProgrammation des actions start / perma :\n"
-    start_perma = Action.query.filter(
-        Action.base.has(BaseAction.trigger_debut.in_([ActionTrigger.start, ActionTrigger.perma]))
-    ).all()
+    start_perma = (
+        Action.query.join(Action.base)
+        .filter(BaseAction.trigger_debut.in_([ActionTrigger.start, ActionTrigger.perma]))
+        .all()
+    )
     for action in start_perma:
         rep += f" - À 19h : /open {action.id} (trigger_debut == {action.base.trigger_debut})\n"
         await planif_command(n19, open_action, id=action.id)

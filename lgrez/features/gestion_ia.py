@@ -122,7 +122,7 @@ async def stfu(journey: DiscordJourney, *, force: Literal["on", "off"] = None):
 
     if force in [None, "on"] and id not in config.bot.in_stfu:
         config.bot.in_stfu.append(id)
-        await journey.send("Okay, je me tais ! Tape !stfu quand tu voudras de nouveau de moi :cry:")
+        await journey.send("Okay, je me tais ! Tape `/stfu` quand tu voudras de nouveau de moi :cry:")
 
     elif force in [None, "off"] and id in config.bot.in_stfu:
         config.bot.in_stfu.remove(id)

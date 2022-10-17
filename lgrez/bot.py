@@ -28,6 +28,8 @@ async def _check_and_prepare_objects(bot: LGBot) -> None:
         # *really* needed objects, even if nothing is setup
         config.Channel.logs = config.guild.text_channels[0]
         await tools.log("Server not setup - call `/setup` !")
+        config.bot.tree.enable_command("setup")
+        await config.bot.tree.sync(guild=config.guild)
         return
 
     errors = []
@@ -282,6 +284,10 @@ class LGBot(discord.Client):
         if not message.webhook_id and message.author.top_role == config.Role.everyone:
             # Pas de rôle affecté : le bot te calcule même pas
             return
+
+        if message.content.startswith("/"):
+            # Sécurité si fail de commande
+            await message.delete()
 
         if message.channel.name.startswith(config.private_chan_prefix) and message.channel.id not in self.in_stfu:
             # Conditions d'IA respectées (voir doc) : on trigger

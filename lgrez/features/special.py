@@ -334,6 +334,7 @@ class CommandTransformer(app_commands.Transformer):
 
 
 @app_commands.command()
+@tools.mjs_only
 @journey_command
 async def command(
     journey: DiscordJourney,

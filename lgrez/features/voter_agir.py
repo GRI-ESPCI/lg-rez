@@ -148,14 +148,14 @@ async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Jo
 
     # Test si la cible est sous le coup d'un haro / candidate
     if vote == Vote.cond and not CandidHaro.query.filter_by(joueur=cible, type=CandidHaroType.haro).first():
-        await journey.send(
+        await journey.ok_cancel(
             f"{cible.nom} n'a pas (encore) subi ou posté de haro ! "
             "Si c'est toujours le cas à la fin du vote, ton vote sera compté comme blanc... \n"
             "Veux-tu continuer ?",
             ephemeral=ephemeral,
         )
     elif vote == Vote.maire and not CandidHaro.query.filter_by(joueur=cible, type=CandidHaroType.candidature).first():
-        await journey.send(
+        await journey.ok_cancel(
             f"{cible.nom} ne s'est pas (encore) présenté(e) ! "
             "Si c'est toujours le cas à la fin de l'élection, ton vote sera compté comme blanc... \n"
             "Veux-tu continuer ?",

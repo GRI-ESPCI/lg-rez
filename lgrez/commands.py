@@ -62,12 +62,13 @@ class LGCommandTree(app_commands.CommandTree):
         # # Commandes spéciales, méta-commandes...
         self._add_module_commands(special)
 
-        # Commandes désactivées de base (activées par /open vote)
+        # Commandes désactivées de base
         self.disable_command("vote")
         self.disable_command("votemaire")
         self.disable_command("voteloups")
         self.disable_command("haro")
         self.disable_command("candid")
+        self.disable_command("setup")
 
     def _add_module_commands(self, module: types.ModuleType) -> None:
         for name, value in inspect.getmembers(module):
@@ -90,6 +91,8 @@ class LGCommandTree(app_commands.CommandTree):
             if isinstance(command, app_commands.Group):
                 for subcommand in command.walk_commands():
                     self.enabled_commands_and_subcommands[subcommand.qualified_name] = subcommand
+            else:
+                self.enabled_commands_and_subcommands[command.qualified_name] = command
             return True
         else:
             raise LookupError(f"Commande non déclarée : {name}")
@@ -104,6 +107,8 @@ class LGCommandTree(app_commands.CommandTree):
             if isinstance(command, app_commands.Group):
                 for subcommand in command.walk_commands():
                     self.enabled_commands_and_subcommands.pop(subcommand.qualified_name, None)
+            else:
+                self.enabled_commands_and_subcommands.pop(command.qualified_name, None)
             return True
         else:
             raise LookupError(f"Commande non déclarée : {name}")

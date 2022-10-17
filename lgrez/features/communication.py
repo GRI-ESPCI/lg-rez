@@ -222,15 +222,15 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
         ts -= datetime.timedelta(days=1)
 
     log = f"!plot {quoi} (> {ts}) :"
-    query = Utilisation.query.filter(
+    query = Utilisation.query.join(Utilisation.action).filter(
         Utilisation.etat == UtilEtat.validee,
         Utilisation.ts_decision > ts,
-        Utilisation.action.has(active=True),
+        Action.active == True,
     )
     cibles = {}
 
     # Get votes
-    utils = query.filter(Utilisation.action.has(vote=vote_enum)).all()
+    utils = query.join(Utilisation.action).filter(Action.vote == vote_enum).all()
     votes = {util.action.joueur: util.cible for util in utils}
     votelog = " / ".join(f"{v.nom} -> {c.nom}" for v, c in votes.items())
     log += f"\n  - Votes : {votelog}"
@@ -243,7 +243,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     intba = BaseAction.query.get(config.modif_vote_baseaction)
     if intba:
         log += "\n  - Intrigant(s) : "
-        for util in query.filter(Utilisation.action.has(base=intba)).all():
+        for util in query.join(Utilisation.action).filter(Action.base == intba).all():
 
             votant = util.ciblage("cible").valeur
             vote = util.ciblage("vote").valeur
@@ -266,7 +266,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     corba = BaseAction.query.get(config.ajout_vote_baseaction)
     if corba:
         log += "\n  - Corbeau(x) : "
-        for util in query.filter(Utilisation.action.has(base=corba)).all():
+        for util in query.join(Utilisation.action).filter(Action.base == corba).all():
             log += f"{util.action.joueur.nom} -> {util.cible} / "
             cibles.setdefault(util.cible, [])
             cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes)
