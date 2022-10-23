@@ -309,7 +309,7 @@ class CibleTransformer(app_commands.Transformer):
             base_ciblage = action.base.base_ciblages[self.N_CIBLE]
         except IndexError:
             # Pas autant de ciblages pour cette action
-            return [app_commands.Choice(name="(Paramètre non utilisé par cette action)", value="__NO_CIBLE")]
+            return [app_commands.Choice(name="Valider", value="__NO_CIBLE")]
 
         match base_ciblage.type:
             case CibleType.joueur:
@@ -327,7 +327,7 @@ class CibleTransformer(app_commands.Transformer):
             case CibleType.texte:
                 choices = [app_commands.Choice(name="[Texte libre]", value=current)]
 
-        return [app_commands.Choice(name=f"🔽  {base_ciblage.phrase} 🔽"[:100], value="__PHRASE"), *choices]
+        return [app_commands.Choice(name=f"🔽  {base_ciblage.phrase} 🔽"[:100], value="__PHRASE"), *choices[:24]]
 
 
 class Cible2Transformer(CibleTransformer):
@@ -346,17 +346,17 @@ async def action_(
     journey: DiscordJourney,
     *,
     action: app_commands.Transform[Action, ActionTransformer],
-    cible: app_commands.Transform[Joueur | Role | Camp | bool | str | None, CibleTransformer] | None = None,
-    cible_2: app_commands.Transform[Joueur | Role | Camp | bool | str | None, Cible2Transformer] | None = None,
+    cible: app_commands.Transform[Joueur | Role | Camp | bool | str | None, CibleTransformer],
+    cible_2: app_commands.Transform[Joueur | Role | Camp | bool | str | None, Cible2Transformer],
     cible_3: app_commands.Transform[Joueur | Role | Camp | bool | str | None, Cible3Transformer] | None = None,
 ):
     """Utilise l'action de ton rôle / une des actions associées.
 
     Args:
         action: L'action pour laquelle agir (si il n'y a pas de suggestions, c'est que tu ne peux pas agir !)
-        cible: La première cible de l'action, cf. la première suggestion (ne pas cliquer dessus !)
-        cible_2: La deuxième cible de l'action, cf. la première suggestion (ne pas cliquer dessus !)
-        cible_3: La troisième cible de l'action, cf. la première suggestion (ne pas cliquer dessus !)
+        cible: La première cible de l'action. Voir la première suggestion pour plus de détails
+        cible_2: La deuxième cible de l'action, si nécessaire. Voir la première suggestion pour plus de détails
+        cible_3: La troisième cible de l'action, si nécessaire. Voir la première suggestion pour plus de détails
 
     Cette commande n'est utilisable que si tu as au moins une action ouverte.
     Action = pouvoir associé à ton rôle, mais aussi pouvoirs ponctuels (Lame Vorpale, Chat d'argent...)
@@ -438,7 +438,6 @@ async def action_(
 
     # Écriture dans sheet Données brutes
     await export_vote(None, util)
-    await journey.send("Salut")
 
     # Conséquences si action instantanée
     if action.base.instant:

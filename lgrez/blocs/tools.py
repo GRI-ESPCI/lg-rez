@@ -376,7 +376,7 @@ class HaroteTransformer(VivantTransformer, _CandidHaroTransformerMixin):
 
 class CandidatTransformer(VivantTransformer, _CandidHaroTransformerMixin):
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await super().get_choices(current, CandidHaroType.candidature, "✅ candidat", "⚠️ pas de haro")
+        return await super().get_choices(current, CandidHaroType.candidature, "✅ candidat", "⚠️ pas candidat")
 
 
 class RoleTransformer(app_commands.Transformer, _TableTransformerMixin):
@@ -824,6 +824,8 @@ async def _send_messages(
     messageable: discord.abc.Messageable | discord.Interaction,
     contents: list[str],
     view: discord.ui.View | None = None,
+    ephemeral: bool = False,
+    author: discord.Member | None = None,
     **kwargs,
 ) -> list[discord.Message]:
     if not contents:
@@ -831,41 +833,65 @@ async def _send_messages(
 
     messages = []
     if isinstance(messageable, discord.Interaction):
+        interaction = messageable
         # first message -> interaction reply, if possible
-        if not messageable.is_expired() and not messageable.response.is_done():
+        if not interaction.is_expired() and not interaction.response.is_done():
             try:
                 if view and len(contents) == 1:  # sole message -> display view, if applicable
-                    await messageable.response.send_message(contents[0], view=view, **kwargs)
+                    await interaction.response.send_message(contents[0], view=view, ephemeral=ephemeral, **kwargs)
                 else:
-                    await messageable.response.send_message(contents[0], **kwargs)
+                    await interaction.response.send_message(contents[0], ephemeral=ephemeral, **kwargs)
             except discord.HTTPException:
                 pass  # Problème "Unknown interaction", notamment
             else:
                 contents.pop(0)
-                messages.append(await messageable.original_response())
+                messages.append(await interaction.original_response())
 
             if not contents:
                 return messages
 
-        messageable = _UpFollower(messageable)
+        channel = _UpFollower(interaction)
+        original_channel = interaction.channel
+    else:
+        channel = messageable
+        original_channel = channel
 
-    kwargs.pop("ephemeral", None)
+    if ephemeral:
+        # Message éphémère : on ne peut pas l'envoyer hors contexte d'intégration -> envoi en privé à la place
+        if not author:
+            raise RuntimeError("Interaction context unavailable or expired, ephemeral message and no author provided")
+        if author.top_role >= config.Role.mj:
+            channel = config.Channel.logs
+        else:
+            try:
+                joueur = Joueur.from_member(author)
+            except ValueError:
+                raise RuntimeError(
+                    "Interaction context unavailable or expired, ephemeral message and no private chan"
+                ) from None
+            channel = joueur.private_chan
+
+        if channel != original_channel:
+            await channel.send(
+                f":warning: {author.mention} Afin que le secret de ton action reste entre nous, "
+                "continuons ici :arrow_down:"
+            )
 
     if not messages:
         first_content = contents.pop(0)
         if view and not contents:  # last message -> display view, if applicable
-            messages.append(await messageable.send(first_content, view=view, **kwargs))
+            messages.append(await channel.send(first_content, view=view, **kwargs))
         else:
-            messages.append(await messageable.send(first_content, **kwargs))
+            messages.append(await channel.send(first_content, **kwargs))
         if not contents:
             return messages
 
     *main_contents, last_content = contents
     for content in main_contents:
-        messages.append(await messageable.send(content))
+        messages.append(await channel.send(content))
 
     # last message -> display view, if applicable
-    messages.append(await messageable.send(last_content, view=view))
+    messages.append(await channel.send(last_content, view=view))
 
     return messages
 

@@ -73,20 +73,25 @@ class LGCommandTree(app_commands.CommandTree):
     def _add_module_commands(self, module: types.ModuleType) -> None:
         for name, value in inspect.getmembers(module):
             if isinstance(value, (app_commands.Command, app_commands.Group)):
-                if value.parent:  # Sous-commande
-                    self.enabled_commands_and_subcommands[value.qualified_name] = value
-                else:
-                    self.add_command(value, guild=self.guild)
-                    self.enabled_commands[value.qualified_name] = value
+                self.add_and_enable_command(value)
+
             if isinstance(value, app_commands.ContextMenu):
                 self.add_command(value, guild=self.guild)
+
+    def add_and_enable_command(
+        self, command: app_commands.Command | app_commands.Group, override: bool = False
+    ) -> None:
+        if not command.parent:  # Main command
+            self.add_command(command, guild=self.guild, override=override)
+            self.enabled_commands[command.qualified_name] = command
+        self.enabled_commands_and_subcommands[command.qualified_name] = command
 
     def enable_command(self, name: str) -> bool:
         if name in self.enabled_commands:
             return False
         if name in self.disabled_commands:
             command = self.disabled_commands.pop(name)
-            self.add_command(command, guild=self.guild)
+            self.add_command(command)
             self.enabled_commands[name] = command
             if isinstance(command, app_commands.Group):
                 for subcommand in command.walk_commands():

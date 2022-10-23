@@ -377,7 +377,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     emoji_camp = None
     if choisi:
         if quoi == "cond":
-            role, emoji_camp = _chose_role_and_camp(journey, choisi.joueur)
+            role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
             nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
         else:
             # Maire : ne pas annoncer le rôle

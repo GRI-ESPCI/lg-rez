@@ -529,7 +529,7 @@ class BaseCiblage(base.TableBase):
         sqlalchemy.Integer(),
         nullable=False,
         default=1,
-        doc="Ordre (relatif) d'apparition du ciblage lors du ``!action`` ,"
+        doc="Ordre (relatif) d'apparition du ciblage lors du ``/action`` ,"
         "\n\nSi deux ciblages ont la même priorité, ils seront considérés "
         "comme ayant une signification symétrique (notamment, si "
         ":attr:`doit_changer` vaut ``True``, tous les membres du groupe "

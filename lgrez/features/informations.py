@@ -10,7 +10,7 @@ from discord import app_commands
 
 from lgrez import config
 from lgrez.blocs import tools, env
-from lgrez.bdd import Joueur, Role, Camp, BaseAction, ActionTrigger, Vote
+from lgrez.bdd import Joueur, Role, Camp, BaseAction, ActionTrigger, Vote, Action
 from lgrez.blocs.journey import DiscordJourney, journey_command
 from lgrez.features import gestion_actions
 
@@ -198,6 +198,33 @@ async def infos(journey: DiscordJourney):
     )
 
 
+def _actions_table(actions: list[Action]) -> str:
+    return tools.code_bloc(
+        "ID   Active  Action                   Début       Fin         CD   Charges   Refill         État\n"
+        "-----------------------------------------------------------------------------------------------------\n"
+        + "\n".join(
+            str(action.id).ljust(5)
+            + str(action.active).ljust(8)
+            + action.base.slug.ljust(25)
+            + str(
+                action.base.heure_debut
+                if action.base.trigger_debut == ActionTrigger.temporel
+                else action.base.trigger_debut.name
+            ).ljust(12)
+            + str(
+                action.base.heure_fin
+                if action.base.trigger_fin == ActionTrigger.temporel
+                else action.base.trigger_fin.name
+            ).ljust(12)
+            + str(action.cooldown).ljust(5)
+            + str(action.charges).ljust(10)
+            + str(action.base.refill).ljust(15)
+            + ("Ouverte" if action.is_open else "Fermée")
+            for action in actions
+        )
+    )
+
+
 @app_commands.command()
 @tools.mjs_only
 @journey_command
@@ -209,35 +236,13 @@ async def actions(journey: DiscordJourney, *, joueur: app_commands.Transform[Jou
     """
     actions = [ac for ac in joueur.actions if ac.base]
 
-    rep = f"Rôle : {joueur.role.nom_complet or joueur.role}\n"
-
-    rep += "Actions :"
-    rep += tools.code_bloc(
-        "id   active  baseaction               début     fin       cd   charges   refill\n"
-        "--------------------------------------------------------------------------------------\n"
-        + "\n".join(
-            str(action.id).ljust(5)
-            + str(action.active).ljust(8)
-            + action.base.slug.ljust(25)
-            + str(
-                action.base.heure_debut
-                if action.base.trigger_debut == ActionTrigger.temporel
-                else action.base.trigger_debut.name
-            ).ljust(10)
-            + str(
-                action.base.heure_fin
-                if action.base.trigger_fin == ActionTrigger.temporel
-                else action.base.trigger_fin.name
-            ).ljust(10)
-            + str(action.cooldown).ljust(5)
-            + str(action.charges).ljust(10)
-            + str(action.base.refill)
-            for action in actions
-        )
-    )
-    rep += "Modifier/ajouter/stop :"
     choix = await journey.select(
-        rep,
+        (
+            f"Joueur : {joueur.nom}\n"
+            f"Rôle : {joueur.role.nom_complet or joueur.role}\n"
+            f"Actions : {_actions_table(actions)}\n"
+            "Modifier/ajouter/stop :"
+        ),
         {action: f"Modifier {action.id} {action.base.slug}" for action in actions}
         | {"new": "Ajouter une action", "stop": "Stop"},
         placeholder="Action à réaliser",
@@ -268,25 +273,31 @@ async def actions(journey: DiscordJourney, *, joueur: app_commands.Transform[Jou
     action = choix
     gsheet_id = env.load("LGREZ_ROLES_SHEET_ID")
     url = f"https://docs.google.com/spreadsheets/d/{gsheet_id}"
-    while True:
-        choix = await journey.buttons(
-            "Pour modifier les attributs de la baseaction, modifier le Gsheet et utiliser `/fillroles` ; "
-            f"pour ouvrir/fermer l'action, utiliser `/open_action {action.id}` / `/close_action {action.id}`.)",
-            {
-                "active": discord.ui.Button(label="Désactiver", style=discord.ButtonStyle.gray)
-                if action.active
-                else discord.ui.Button(label="Activer", style=discord.ButtonStyle.success),
-                "edit": discord.ui.Button(label="Modifier cooldown / charges", style=discord.ButtonStyle.blurple),
-                "gsheet": discord.ui.Button(label="Modifier sur le Gsheet", style=discord.ButtonStyle.link, url=url),
-                "validate": discord.ui.Button(label="Valider et quitter", style=discord.ButtonStyle.success),
-                "cancel": discord.ui.Button(label="Annuler les modifications", style=discord.ButtonStyle.danger),
-            },
-        )
+    choix = await journey.buttons(
+        "Pour modifier les attributs de la baseaction, modifier le Gsheet et utiliser `/fillroles`.",
+        {
+            "active": discord.ui.Button(label="Désactiver", style=discord.ButtonStyle.gray)
+            if action.active
+            else discord.ui.Button(label="Activer", style=discord.ButtonStyle.success),
+            "edit": discord.ui.Button(label="Modifier cooldown / charges", style=discord.ButtonStyle.blurple),
+            "gsheet": discord.ui.Button(label="Modifier sur le Gsheet", style=discord.ButtonStyle.link, url=url),
+            "open_close": discord.ui.Button(
+                label="Fermer l'action",
+                style=discord.ButtonStyle.secondary if action.active else discord.ButtonStyle.gray,
+            )
+            if action.is_open
+            else discord.ui.Button(
+                label="Ouvrir l'action",
+                style=discord.ButtonStyle.success if action.active else discord.ButtonStyle.gray,
+            ),
+        },
+    )
 
-        if choix == "active":
+    match choix:
+        case "active":
             action.active = not action.active
 
-        elif choix == "edit":
+        case "edit":
             cooldown, charges = await journey.modal(
                 "Modifier l'action",
                 discord.ui.TextInput(label="Cooldown (nombre entier)", max_length=2, default=str(action.cooldown)),
@@ -294,19 +305,19 @@ async def actions(journey: DiscordJourney, *, joueur: app_commands.Transform[Jou
             )
             action.cooldown = int(cooldown)
             action.charges = int(charges) if charges else None
-
-        elif choix == "validate":
             action.update()
-            await journey.send("Modifications enregistrées.")
-            return
 
-        elif choix == "cancel":
-            await journey.send("Modifications annulées.")
-            return
+        case "open_close":
+            if action.is_open:
+                await gestion_actions.close_action(action)
+            else:
+                await gestion_actions.open_action(action)
 
-        else:
+        case _:
             await journey.send(f"C'est possible ça ? {choix}")
             return
+
+    await journey.send(f"Nouvelles actions : {_actions_table(actions)}")
 
 
 @app_commands.command()

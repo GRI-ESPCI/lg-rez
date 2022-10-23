@@ -60,8 +60,8 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
 
         @discord.ui.button(label=f"Contre-haro", style=discord.ButtonStyle.danger, emoji=config.Emoji.ha)
         async def contre_haro(self, contre_haro_interaction: discord.Interaction, button: discord.ui.Button):
-            async with DiscordJourney(contre_haro_interaction, ephemeral=True) as contre_info_journey:
-                await _haro(contre_info_journey, joueur=moi)
+            async with DiscordJourney(contre_haro_interaction, ephemeral=True) as contre_haro_journey:
+                await _haro(contre_haro_journey, joueur=moi)
 
     haro_message = await config.Channel.haros.send(f"(Psst, {joueur.member.mention} :3)", embed=emb, view=_HaroView())
     await config.Channel.debats.send(
@@ -73,7 +73,8 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
     contre_haro = CandidHaro(joueur=moi, type=CandidHaroType.haro)
     CandidHaro.add(haro, contre_haro)
 
-    await journey.send(f"Allez, c'est parti ! ({config.Channel.haros.mention})")
+    if journey.channel != config.Channel.haros:
+        await journey.send(f"Allez, c'est parti ! ({config.Channel.haros.mention})")
 
 
 @app_commands.command()
@@ -109,7 +110,7 @@ async def haro_menu(journey: DiscordJourney, member: discord.Member):
         await journey.send(":x: Hmm, ce joueur n'a pas l'air inscrit !")
         return
 
-    await _haro(journey, joueur=joueur, ephemeral=True)
+    await _haro(journey, joueur=joueur)
 
 
 @app_commands.command()

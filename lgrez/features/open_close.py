@@ -152,9 +152,9 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
     joueurs = await _get_joueurs("open", qui)
 
     await journey.send(
-        "\n - ".join(joueur.nom for joueur in joueurs),
+        "\n".join(f" - {joueur.nom}" for joueur in joueurs),
         code=True,
-        prefix=f"Utilisateur(s) répondant aux critères ({len(joueurs)}) :",
+        prefix=f"Joueur(s) répondant aux critères ({len(joueurs)}) :",
     )
 
     match qui:
@@ -263,7 +263,7 @@ async def open_actions(journey: DiscordJourney, heure: str):
     actions = await _get_actions("open", heure)
 
     await journey.send(
-        "\n - ".join(f"{action.base.slug} - {action.joueur.nom}" for action in actions),
+        "\n".join(f" - {action.base.slug} - {action.joueur.nom}" for action in actions),
         code=True,
         prefix=f"Action(s) répondant aux critères ({len(actions)}) :",
     )
@@ -324,9 +324,9 @@ async def close_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = 
     joueurs = await _get_joueurs("close", qui)
 
     await journey.send(
-        "\n - ".join(joueur.nom for joueur in joueurs),
+        "\n".join(f" - {joueur.nom}" for joueur in joueurs),
         code=True,
-        prefix=f"Utilisateur(s) répondant aux critères ({len(joueurs)}) :",
+        prefix=f"Joueur(s) répondant aux critères ({len(joueurs)}) :",
     )
 
     match qui:
@@ -414,7 +414,7 @@ async def close_actions(journey: DiscordJourney, heure: str):
     actions = await _get_actions("close", heure)
 
     await journey.send(
-        "\n - ".join(f"{action.base.slug} - {action.joueur.nom}" for action in actions),
+        "\n ".join(f" - {action.base.slug} - {action.joueur.nom}" for action in actions),
         code=True,
         prefix=f"Action(s) répondant aux critères ({len(actions)}) :",
     )
@@ -465,14 +465,14 @@ async def remind_vote(journey: DiscordJourney, *, qui: Vote):
     Elle peut être utilisée à la main, mais attention à ne pas faire n'importe quoi !
 
     Example:
-        - ``!remind maire`` :       rappelle le vote maire maintenant
+        - ``/remind maire`` :       rappelle le vote maire maintenant
     """
     joueurs = await _get_joueurs("remind", qui)
 
     await journey.send(
-        "\n - ".join(joueur.nom for joueur in joueurs),
+        "\n".join(f" - {joueur.nom}" for joueur in joueurs),
         code=True,
-        prefix=f"Utilisateur(s) répondant aux critères ({len(joueurs)}) :",
+        prefix=f"Joueur(s) répondant aux critères ({len(joueurs)}) :",
     )
 
     for joueur in joueurs:
@@ -513,7 +513,7 @@ async def remind_actions(journey: DiscordJourney, heure: str):
     actions = await _get_actions("remind", heure)
 
     await journey.send(
-        "\n - ".join(f"{action.base.slug} - {action.joueur.nom}" for action in actions),
+        "\n".join(f" - {action.base.slug} - {action.joueur.nom}" for action in actions),
         code=True,
         prefix=f"Action(s) répondant aux critères ({len(actions)}) :",
     )
@@ -568,11 +568,12 @@ async def refill(
 
     if joueur:
         query = query.filter(Action.joueur == joueur)
-    await journey.ok_cancel("Tu as choisi de recharger le pouvoir de TOUS les joueurs actifs, en es-tu sûr ?")
+    else:
+        await journey.ok_cancel("Tu as choisi de recharger le pouvoir de TOUS les joueurs actifs, en es-tu sûr ?")
 
     # do refill
     refillable = query.all()
-    await tools.log(refillable, code=True, prefixe=f"Refill {motif} {joueur.nom if joueur else 'ALL'} :")
+    await tools.log(refillable, code=True, prefix=f"Refill {motif} {joueur.nom if joueur else 'ALL'} :")
 
     if joueur and len(refillable) > 1:
         action = await journey.select(
@@ -654,7 +655,7 @@ async def cparti(journey: DiscordJourney):
     await planif_command(
         n19 - datetime.timedelta(minutes=10),
         communication.send,
-        cible="all",
+        cibles="all",
         message=(
             "Ah {member.mention}... J'espère que tu es prêt(e), parce que la partie commence DANS 10 MINUTES !!!"
             "https://tenor.com/view/thehungergames-hungergames-thggifs-effie-gif-5114734"

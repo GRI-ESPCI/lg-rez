@@ -82,7 +82,10 @@ class DiscordJourney:
         ephemeral: bool = False,
         author_only: discord.Member | None = None,
         timeout: float | None = None,
+        command_author: discord.Member | None = None,
     ) -> None:
+        self._thinking = True
+
         self.interaction = interaction
         self.ephemeral = ephemeral
         self.author_only = author_only
@@ -91,6 +94,8 @@ class DiscordJourney:
         self.member = interaction.user
         if not isinstance(self.member, discord.Member):
             raise ValueError(f"Interaction user is not a guild member (type {type(self.member)})")
+        self.command_author = command_author or self.member
+
         self.channel: discord.TextChannel = interaction.channel
         self.created_at: datetime.datetime = interaction.created_at
 
@@ -106,34 +111,42 @@ class DiscordJourney:
         if not isinstance(new_interaction, discord.Interaction):
             raise TypeError(f"DiscordJourney.interaction must be a discord.Interaction! (got {type(new_interaction)})")
         self._interaction = new_interaction
-        asyncio.get_running_loop().call_later(self.TIMEOUT_DELAY, self._timeout_interaction, self.interaction)
+        if self._thinking:
+            asyncio.get_running_loop().call_later(self.TIMEOUT_DELAY, self._timeout_interaction, self.interaction)
 
     def _timeout_interaction(self, interaction: discord.Interaction) -> None:
         async def _timeout():
             if not interaction.response.is_done():
-                await interaction.response.defer(thinking=True)
+                await interaction.response.defer(thinking=True, ephemeral=self.ephemeral)
 
         task = asyncio.create_task(_timeout())
         self._tasks.add(task)  # Cf. https://docs.python.org/fr/3/library/asyncio-task.html#asyncio.create_task
         task.add_done_callback(self._tasks.discard)
 
+    def last_interaction(self):
+        self._thinking = False
+
     async def _send_message(
         self,
-        content: str | None = None,
+        content: str = "",
         view: ui.View | None = None,
         code: bool = False,
         prefix: str = "",
         ephemeral: bool = False,
         **kwargs,
     ) -> list[discord.Message]:
-        ephemeral = ephemeral or self.ephemeral
         return await tools.send_blocs(
-            self.interaction, content, code=code, prefix=prefix, view=view, ephemeral=ephemeral, **kwargs
+            self.interaction,
+            content,
+            code=code,
+            prefix=prefix,
+            view=view,
+            ephemeral=ephemeral or self.ephemeral,
+            author=self.member,
+            **kwargs,
         )
 
-    async def send(
-        self, content: str | None = None, code: bool = False, prefix: str = "", **kwargs
-    ) -> list[discord.Message]:
+    async def send(self, content: str = "", code: bool = False, prefix: str = "", **kwargs) -> list[discord.Message]:
         """Send a message in this journey.
 
         Args:
@@ -227,16 +240,16 @@ class DiscordJourney:
         else:
             if timeout:
                 raise RuntimeError("Journey timeout")
-
-        # Clean view
-        clicked_key = None
-        for key, button in buttons.items():
-            if button == clicked_button:
-                clicked_key = key
-                clicked_button_cleanup(button, view)
-            else:
-                not_clicked_button_cleanup(button, view)
-        await message.edit(view=view)
+        finally:
+            # Clean view
+            clicked_key = None
+            for key, button in buttons.items():
+                if button == clicked_button:
+                    clicked_key = key
+                    clicked_button_cleanup(button, view)
+                else:
+                    not_clicked_button_cleanup(button, view)
+            await message.edit(view=view)
 
         return clicked_key
 
@@ -380,7 +393,6 @@ class DiscordJourney:
 
         return [input.value for input in inputs]
 
-    @classmethod
     async def _catch_next_command(self) -> tuple[discord.Interaction, Callable[[DiscordJourney], Coroutine]]:
         class _Awaitable:
             # Oh, well... let's say it just work?

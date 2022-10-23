@@ -288,6 +288,7 @@ class LGBot(discord.Client):
         if message.content.startswith("/"):
             # Sécurité si fail de commande
             await message.delete()
+            return
 
         if message.channel.name.startswith(config.private_chan_prefix) and message.channel.id not in self.in_stfu:
             # Conditions d'IA respectées (voir doc) : on trigger

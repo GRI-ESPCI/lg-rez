@@ -507,6 +507,6 @@ async def purge(journey: DiscordJourney, limit: int | None = None):
     else:
         mess = "Supprimer tous les messages de ce chan ?"
 
-    await journey.ok_cancel(mess, ephemeral=True)
+    journey.last_interaction()
+    await journey.ok_cancel(mess)
     await journey.channel.purge(limit=limit)
-    await journey.send(content="Fait.", ephemeral=True)

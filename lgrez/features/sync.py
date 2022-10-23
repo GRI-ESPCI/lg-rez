@@ -531,7 +531,7 @@ async def modif_joueur(joueur_id: int, modifs: list[TDBModif], silent: bool = Fa
                     f"{af} Ton nouveau rôle, si tu l'acceptes : "
                     f"{tools.bold(new_role.nom_complet)} !\nQue ce soit pour "
                     "un jour ou pour le reste de la partie, renseigne-toi en "
-                    f"tapant {tools.code(f'!roles {new_role.nom}')}.\n"
+                    f"tapant {tools.code(f'/roles {new_role.nom}')}.\n"
                 )
 
         elif modif.col == "camp" and not silent:  # Modification camp

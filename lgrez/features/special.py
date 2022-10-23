@@ -21,6 +21,23 @@ from lgrez.bdd import *  # toutes les tables dans globals()
 from lgrez.blocs.journey import DiscordJourney, journey_command
 
 
+class CommandTransformer(app_commands.Transformer):
+    @staticmethod
+    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
+        if getattr(interaction.namespace, "mode", None) == "enable":
+            return config.bot.tree.disabled_commands
+        else:
+            return config.bot.tree.enabled_commands
+
+    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
+        return self._get_commands(interaction)[value]
+
+    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
+        ][:25]
+
+
 DESCRIPTION = """Commandes spéciales (méta-commandes et expérimentations)"""
 
 
@@ -32,6 +49,7 @@ async def panik(journey: DiscordJourney):
 
     PAAAAANIK
     """
+    await journey.interaction.response.defer()
     sys.exit()
 
 
@@ -113,7 +131,12 @@ async def co(journey: DiscordJourney, member: discord.Member):
 @app_commands.command()
 @tools.mjs_only
 @journey_command
-async def doas(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.JoueurTransformer]):
+async def doas(
+    journey: DiscordJourney,
+    *,
+    joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],
+    command: app_commands.Transform[app_commands.Command, CommandTransformer],
+):
     """Exécute la prochaine commande en tant qu'un joueur (COMMANDE MJ)
 
     Args:
@@ -122,10 +145,38 @@ async def doas(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur
     Example:
         ``!doas Vincent Croquette !vote Annie Colin``
     """
-    interaction, runner = await journey.catch_next_command(f"Exécuter la commande à exécuter en tant que {joueur.nom}")
-    async with DiscordJourney(interaction, ephemeral=True) as _journey:
-        _journey.member = joueur.member
-        await runner(_journey)
+    if command.default_permissions:
+        if command.default_permissions.manage_messages:
+            await journey.send(f":x: Commande `/{command.qualified_name}` réservée aux MJs !")
+            return
+        if command.default_permissions.priority_speaker:
+            await journey.send(f":x: Commande `/{command.qualified_name}` réservée aux MJs / rédacteurs !")
+            return
+        if command.default_permissions.send_messages and joueur.est_mort:
+            await journey.send(f":x: Commande `/{command.qualified_name}` réservée aux joueurs en vie !")
+            return
+
+    if command.parameters:
+        values = await journey.modal(
+            f"/doas {joueur.nom} /{command.qualified_name}",
+            *[
+                discord.ui.TextInput(label=param.display_name, placeholder=param.description, required=param.required)
+                for param in command.parameters
+            ],
+        )
+    else:
+        values = []
+
+    parameters = {parameter.name: value for parameter, value in zip(command.parameters, values)}
+
+    params_descr = " ".join(f"{name}:{value!r}" for name, value in parameters.items())
+    await journey.send(
+        f"/{command.qualified_name} {params_descr}", code=True, prefix=f":robot: Exécution en tant que {joueur.nom} :"
+    )
+
+    async with DiscordJourney(journey.interaction, ephemeral=True, command_author=journey.member) as journey_:
+        journey_.member = joueur.member
+        await command._callback(journey_.interaction, **parameters)
 
 
 @app_commands.command()
@@ -317,20 +368,6 @@ async def setup(journey: DiscordJourney):
     await journey.yes_no("Terminé ! Ce salon va être détruit (ce n'est pas une question).")
     for channel in original_channels:
         await channel.delete()
-
-
-class CommandTransformer(app_commands.Transformer):
-    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
-        if interaction.namespace.mode == "enable":
-            return config.bot.tree.disabled_commands
-        else:
-            return config.bot.tree.enabled_commands
-
-    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
-        return self._get_commands()[value]
-
-    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return [app_commands.Choice(name=name, value=name) for name in self._get_commands() if current in name][:25]
 
 
 @app_commands.command()
