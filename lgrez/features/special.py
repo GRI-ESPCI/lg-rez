@@ -24,10 +24,24 @@ from lgrez.blocs.journey import DiscordJourney, journey_command
 class CommandTransformer(app_commands.Transformer):
     @staticmethod
     def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
-        if getattr(interaction.namespace, "mode", None) == "enable":
+        if getattr(interaction.namespace, "mode") == "enable":
             return config.bot.tree.disabled_commands
         else:
             return config.bot.tree.enabled_commands
+
+    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
+        return self._get_commands(interaction)[value]
+
+    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
+        ][:25]
+
+
+class SubCommandTransformer(app_commands.Transformer):
+    @staticmethod
+    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
+        return config.bot.tree.enabled_commands_and_subcommands
 
     async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
         return self._get_commands(interaction)[value]
@@ -135,7 +149,7 @@ async def doas(
     journey: DiscordJourney,
     *,
     joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],
-    command: app_commands.Transform[app_commands.Command, CommandTransformer],
+    command: app_commands.Transform[app_commands.Command, SubCommandTransformer],
 ):
     """Exécute la prochaine commande en tant qu'un joueur (COMMANDE MJ)
 
@@ -176,7 +190,7 @@ async def doas(
 
     async with DiscordJourney(journey.interaction, ephemeral=True, command_author=journey.member) as journey_:
         journey_.member = joueur.member
-        await command._callback(journey_.interaction, **parameters)
+        await command._callback._callback(journey_, **parameters)
 
 
 @app_commands.command()
@@ -376,7 +390,7 @@ async def setup(journey: DiscordJourney):
 async def command(
     journey: DiscordJourney,
     mode: Literal["enable", "disable"],
-    command: app_commands.Transform[app_commands.Command, CommandTransformer],
+    command: app_commands.Transform[app_commands.Command | app_commands.Group, CommandTransformer],
 ):
     """✨ Active ou désactive une commande (COMMANDE MJ)
 

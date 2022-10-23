@@ -222,7 +222,7 @@ class Joueur(base.TableBase):
         """
         joueur = cls.query.get(member.id)
         if not joueur:
-            raise ValueError("Joueur.from_member : pas de joueur en base pour `{member}` !")
+            raise ValueError(f"Joueur.from_member : pas de joueur en base pour `{member}` !")
 
         return joueur
 

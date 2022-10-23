@@ -476,6 +476,8 @@ class DiscordJourney:
             async with cls(interaction) as journey:
                 await _run_command(journey)
 
+        new_callable._callable = callable
+
         return new_callable
 
 
