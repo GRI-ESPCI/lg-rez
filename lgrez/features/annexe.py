@@ -31,10 +31,10 @@ async def roll(journey: DiscordJourney, *, pattern: str):
         pattern: Dés à lancer (XdY [+ ...] [+ Z ...]) OU roll spécial (joueur / vivant / mort / rôle / camp).
 
     Examples:
-        - ``!roll 1d6``           -> lance un dé à 6 faces
-        - ``!roll 1d20 +3``       -> lance un dé à 20 faces, ajoute 3 au résultat
-        - ``!roll 1d20 + 2d6 -8`` -> lance un dé 20 plus deux dés 6, enlève 8 au résultat
-        - ``!roll vivant``        -> choisit un joueur vivant
+        - ``/roll 1d6``           -> lance un dé à 6 faces
+        - ``/roll 1d20 +3``       -> lance un dé à 20 faces, ajoute 3 au résultat
+        - ``/roll 1d20 + 2d6 -8`` -> lance un dé 20 plus deux dés 6, enlève 8 au résultat
+        - ``/roll vivant``        -> choisit un joueur vivant
     """
     global next_roll
 
@@ -162,7 +162,7 @@ async def ping(journey: DiscordJourney):
     # Temps d'envoi = temps entre réception 1er message (traitement quasi instantané)
     # et création 2e, moins temps de retour d'information
     delta_tot = delta_rec + delta_ret + delta_env
-    # Total = temps entre création message !pong et réception information réponse envoyée
+    # Total = temps entre création message /pong et réception information réponse envoyée
     await mess.edit(
         content=f"/pong\n"
         + tools.code_bloc(

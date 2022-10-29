@@ -124,7 +124,7 @@ class _ComparaisonResults:
 def _compare_items(
     existants: dict, new: dict, table: type, cols: dict, primary_key: str, bc_cols: dict | None = None
 ) -> _ComparaisonResults:
-    """Utility function for !fillroles: compare table items and dicts"""
+    """Utility function for /fillroles: compare table items and dicts"""
     res = _ComparaisonResults()
     if table == BaseAction:
         res.sub_results = _ComparaisonResults()
@@ -456,7 +456,7 @@ async def modif_joueur(joueur_id: int, modifs: list[TDBModif], silent: bool = Fa
     """
     joueur = Joueur.query.get(joueur_id)
     if not joueur:
-        raise ValueError(f"!sync : joueur d'ID {joueur_id} introuvable")
+        raise ValueError(f"/sync : joueur d'ID {joueur_id} introuvable")
 
     member = joueur.member
     chan = joueur.private_chan
@@ -613,7 +613,7 @@ async def process_mort(joueur: Joueur) -> None:
             )
             await boudoir.chan.send(
                 tools.ital(
-                    "Le boudoir peut être transféré à un autre membre à l'aide de la commande `!boudoir transfer`."
+                    "Le boudoir peut être transféré à un autre membre à l'aide de la commande `/boudoir transfer`."
                 )
             )
 
@@ -751,7 +751,7 @@ async def fillroles(journey: DiscordJourney):
                     ciblages_idx.append(idx)
         except ValueError:
             raise ValueError(
-                f"!fillroles : colonne '{key}' non trouvée dans la feuille '{table.__tablename__}' du GSheet "
+                f"/fillroles : colonne '{key}' non trouvée dans la feuille '{table.__tablename__}' du GSheet "
                 "*Rôles et actions* (`LGREZ_ROLES_SHEET_ID`)"
             ) from None
 
@@ -783,11 +783,11 @@ async def fillroles(journey: DiscordJourney):
         config.session.commit()
 
         await journey.send(f"> Table {tools.code(table.__name__)} remplie ! " + res.bilan)
-        await tools.log(f"`!fillroles` > {table.__name__}:\n{res.log}")
+        await tools.log(f"`/fillroles` > {table.__name__}:\n{res.log}")
         if table == BaseAction:
             sub_res = res.sub_results
             await journey.send(f"> Table {tools.code('BaseCiblage')} remplie simultanément " + sub_res.bilan)
-            await tools.log(f"`!fillroles` > BaseCiblage:\n{sub_res.log}")
+            await tools.log(f"`/fillroles` > BaseCiblage:\n{sub_res.log}")
 
     # ==== Remplissage #rôles ===
     chan_roles = config.Channel.roles

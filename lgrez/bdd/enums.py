@@ -36,7 +36,7 @@ class ActionTrigger(enum.Enum):
         start: Ouverture au lancement du jeu
         auto: Action automatique, fermeture dès l'ouverture
         mort: Ouverture à la mort
-        mot_mjs: Ouverture/fermeture au !plot cond
+        mot_mjs: Ouverture/fermeture au /plot cond
         open_cond: À l'ouverture du vote condamné
         close_cond: À la fermeture du vote condamné
         open_maire: À l'ouverture du vote du maire

@@ -222,7 +222,7 @@ class Action(base.TableBase):
 class Utilisation(base.TableBase):
     """Table de données des utilisations des actions.
 
-    Les instances sont enregistrées via :meth:`\!open
+    Les instances sont enregistrées via :meth:`\/open
     <.open_close.OpenClose.OpenClose.open.callback>` ;
     elles n'ont pas vocation à être supprimées.
     """
@@ -420,7 +420,7 @@ class Utilisation(base.TableBase):
 class Ciblage(base.TableBase):
     """Table de données des cibles désignées dans les utilisations d'actions.
 
-    Les instances sont enregistrées via :meth:`\!action
+    Les instances sont enregistrées via :meth:`\/action
     <.voter_agir.VoterAgir.VoterAgir.action.callback>` ;
     elles n'ont pas vocation à être supprimées.
     """

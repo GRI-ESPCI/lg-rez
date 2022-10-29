@@ -8,7 +8,7 @@ un usage public.
 
 .. note ::
 
-    Les Cogs et leurs commandes peuvent être vus en envoyant ``!help``
+    Les Cogs et leurs commandes peuvent être vus en envoyant ``/help``
     à un LGBot fonctionnel (en possédant les rôles :attr:`.config.Role.mj`
     et :attr:`.config.Role.joueur_en_vie`)
 

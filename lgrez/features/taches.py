@@ -160,7 +160,7 @@ async def cancel(journey: DiscordJourney, *, id: int):
     Args:
         id: ID de la tâche à annuler (voir /taches).
 
-    Utiliser ``!taches`` pour voir la liste des IDs.
+    Utiliser ``/taches`` pour voir la liste des IDs.
     """
     if tache := Tache.query.get(int(id)):
         tache.delete()

@@ -142,7 +142,7 @@ class DiscordJourney:
             prefix=prefix,
             view=view,
             ephemeral=ephemeral or self.ephemeral,
-            author=self.member,
+            author=self.command_author,
             **kwargs,
         )
 

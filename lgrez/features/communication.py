@@ -122,9 +122,9 @@ async def send(journey: DiscordJourney, *, cibles: str, message: str):
     Il est impossible d'appeler des coroutines (await) dans le code à évaluer.
 
     Examples:
-        - ``!send all Bonsoir à tous c'est Fanta``
-        - ``!send vivants Attention {member.mention}, derrière toi c'est affreux !``
-        - ``!send "role=servante" Ça va vous ? Vous êtes bien {joueur.role.nom} ?``
+        - ``/send all Bonsoir à tous c'est Fanta``
+        - ``/send vivants Attention {member.mention}, derrière toi c'est affreux !``
+        - ``/send "role=servante" Ça va vous ? Vous êtes bien {joueur.role.nom} ?``
     """
     if cibles == "all":
         joueurs = Joueur.query.all()
@@ -221,7 +221,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     if ts > datetime.datetime.now():  # hier
         ts -= datetime.timedelta(days=1)
 
-    log = f"!plot {quoi} (> {ts}) :"
+    log = f"/plot {quoi} (> {ts}) :"
     query = Utilisation.query.join(Utilisation.action).filter(
         Utilisation.etat == UtilEtat.validee,
         Utilisation.ts_decision > ts,
@@ -274,7 +274,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     # Classe utilitaire
     @functools.total_ordering
     class _Cible:
-        """Représente un joueur ciblé, pour usage dans !plot"""
+        """Représente un joueur ciblé, pour usage dans /plot"""
 
         def __init__(self, joueur, votants):
             self.joueur = joueur

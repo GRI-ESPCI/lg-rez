@@ -46,7 +46,7 @@ class Role(base.TableBase):
 
     Cette table est remplie automatiquement à partir du Google Sheet
     "Rôles et actions" par la commande
-    :meth:`\!fillroles <.sync.Sync.Sync.fillroles.callback>`.
+    :meth:`\/fillroles <.sync.Sync.Sync.fillroles.callback>`.
     """
 
     slug: str = autodoc_Column(
@@ -164,7 +164,7 @@ class Role(base.TableBase):
                 "Rôle par défaut (de slug "
                 f'`lgrez.config.default_role_slug = "{slug}"`) non '
                 "défini (dans le GSheet Rôles et actions) "
-                "ou non chargé (`!fillroles`) !"
+                "ou non chargé (`/fillroles`) !"
             )
         return role
 
@@ -174,7 +174,7 @@ class Camp(base.TableBase):
 
     Cette table est remplie automatiquement à partir du Google Sheet
     "Rôles et actions" par la commande
-    :meth:`\!fillroles <.sync.Sync.Sync.fillroles.callback>`.
+    :meth:`\/fillroles <.sync.Sync.Sync.fillroles.callback>`.
     """
 
     slug: str = autodoc_Column(
@@ -297,7 +297,7 @@ class Camp(base.TableBase):
                 "Camp par défaut (de slug "
                 f'lgrez.config.default_camp_slug = "{slug}") non '
                 "défini (dans le GSheet Rôles et actions) ou non "
-                f"chargé (`!fillroles`) !"
+                f"chargé (`/fillroles`) !"
             )
         return camp
 
@@ -306,7 +306,7 @@ class BaseAction(base.TableBase):
     """Table de données des actions définies de base (non liées à un joueur).
 
     Cette table est remplie automatiquement à partir du Google Sheet
-    "Rôles et actions" par la commande :meth:`\!fillroles
+    "Rôles et actions" par la commande :meth:`\/fillroles
     <.remplissage_bdd.RemplissageBDD.RemplissageBDD.fillroles.callback>`.
     """
 
@@ -492,7 +492,7 @@ class BaseCiblage(base.TableBase):
     """Table de données des modèles de ciblages des actions de base.
 
     Cette table est remplie automatiquement à partir du Google Sheet
-    "Rôles et actions" par la commande :meth:`\!fillroles
+    "Rôles et actions" par la commande :meth:`\/fillroles
     <.remplissage_bdd.RemplissageBDD.RemplissageBDD.fillroles.callback>`.
     """
 

@@ -18,9 +18,9 @@ from lgrez.bdd.base import autodoc_Column, autodoc_ManyToOne, autodoc_OneToMany
 class Reaction(base.TableBase):
     """Table de données des réactions d'IA connues du bot.
 
-    Les instances sont enregistrées via :meth:`\!addIA
+    Les instances sont enregistrées via :meth:`\/addIA
     <.IA.GestionIA.GestionIA.addIA.callback>` et supprimées via
-    :meth:`\!modifIA <.IA.GestionIA.GestionIA.modifIA.callback>`.
+    :meth:`\/modifIA <.IA.GestionIA.GestionIA.modifIA.callback>`.
     """
 
     id: int = autodoc_Column(
@@ -50,10 +50,10 @@ class Reaction(base.TableBase):
 class Trigger(base.TableBase):
     """Table de données des mots et expressions déclenchant l'IA du bot.
 
-    Les instances sont enregistrées via :meth:`\!addIA
-    <.IA.GestionIA.GestionIA.addIA.callback>` ou :meth:`\!modifIA
+    Les instances sont enregistrées via :meth:`\/addIA
+    <.IA.GestionIA.GestionIA.addIA.callback>` ou :meth:`\/modifIA
     <.IA.GestionIA.GestionIA.modifIA.callback>` et supprimées via
-    :meth:`\!modifIA <.IA.GestionIA.GestionIA.modifIA.callback>`.
+    :meth:`\/modifIA <.IA.GestionIA.GestionIA.modifIA.callback>`.
     """
 
     id: int = autodoc_Column(

@@ -129,7 +129,7 @@ async def register_on_tdb(joueur: Joueur) -> None:
         await gsheets.update(sheet, *modifs)
 
 
-# Routine d'inscription (fonction appelée par la commande !co)
+# Routine d'inscription (fonction appelée par la commande /co)
 async def main(member: discord.Member) -> None:
     """Routine d'inscription complète d'un joueur.
 
@@ -141,7 +141,7 @@ async def main(member: discord.Member) -> None:
     Personnalisation : voir :obj:`.config.demande_chambre`, :obj:`.config.chambre_mj`,
     :func:`.config.additional_inscription_step` et :obj:`.config.debut_saison`.
 
-    Commande appelée à l'arrivée sur le serveur, utiliser :meth:`\!co <.bot.Special.Special.co.callback>`
+    Commande appelée à l'arrivée sur le serveur, utiliser :meth:`\/co <.bot.Special.Special.co.callback>`
     pour trigger cette commande depuis Discord.
     """
     try:

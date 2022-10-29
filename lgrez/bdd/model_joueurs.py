@@ -30,7 +30,7 @@ class Joueur(base.TableBase):
 
     Les instances de cette classe correspondent aux lignes du Tableau de
     bord ; elles sont crées par l'inscription (:func:`.inscription.main`)
-    et synchronisées par :meth:`\!sync <.sync.Sync.Sync.sync.callback>`.
+    et synchronisées par :meth:`\/sync <.sync.Sync.Sync.sync.callback>`.
     """
 
     discord_id: int = autodoc_Column(
@@ -249,11 +249,11 @@ class Joueur(base.TableBase):
 class CandidHaro(base.TableBase):
     """Table de données des candidatures et haros en cours #PhilippeCandidHaro.
 
-    Les instances sont enregistrées via :meth:`\!haro
+    Les instances sont enregistrées via :meth:`\/haro
     <.actions_publiques.ActionsPubliques.ActionsPubliques.haro.callback>`
-    / :meth:`\!candid
+    / :meth:`\/candid
     <.actions_publiques.ActionsPubliques.ActionsPubliques.candid.callback>`
-    et supprimées via :meth:`\!wipe
+    et supprimées via :meth:`\/wipe
     <.actions_publiques.ActionsPubliques.ActionsPubliques.wipe.callback>`.
     """
 
@@ -315,7 +315,7 @@ class Boudoir(base.TableBase):
     """Table de données des boudoirs sur le serveur.
 
     Les instances de cette classe sont crées, modifiées et supprimées par
-    :meth:`\!boudoir <.chans.GestionChans.GestionChans.boudoir.callback>`.
+    :meth:`\/boudoir <.chans.GestionChans.GestionChans.boudoir.callback>`.
     """
 
     chan_id: int = autodoc_Column(
@@ -422,7 +422,7 @@ class Bouderie(base.TableBase):
     Table d'association entre :class:`.Joueur` et :class:`.Boudoir`.
 
     Les instances de cette classe sont crées, modifiées et supprimées par
-    :meth:`\!boudoir <.chans.GestionChans.GestionChans.boudoir.callback>`.
+    :meth:`\/boudoir <.chans.GestionChans.GestionChans.boudoir.callback>`.
     """
 
     id: int = autodoc_Column(

@@ -76,7 +76,7 @@ class RealShell(asyncode.AsyncInteractiveConsole):
         self,
         journey: DiscordJourney,
         locals: dict = {},
-        filename: str = "!shell",
+        filename: str = "/shell",
     ) -> None:
         """Initialize self"""
         self.bot = config.bot

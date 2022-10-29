@@ -11,7 +11,7 @@ import sys
 import traceback
 from typing import Literal
 
-# Unused imports because useful for !do / !shell globals
+# Unused imports because useful for /do or /shell globals
 import discord
 from discord import app_commands
 
@@ -111,7 +111,7 @@ async def shell(journey: DiscordJourney):
 
     Envoyer ``help`` dans le pseudo-terminal pour plus d'informations sur son fonctionnement.
 
-    Évidemment, les avertissements dans ``!do`` s'appliquent ici : ne pas faire n'imp avec cette commande !!
+    Évidemment, les avertissements dans ``/do`` s'appliquent ici : ne pas faire n'imp avec cette commande !!
     (même si ça peut être très utile, genre pour ajouter des gens en masse à un channel)
     """
     locs = globals()
@@ -151,13 +151,11 @@ async def doas(
     joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],
     command: app_commands.Transform[app_commands.Command, SubCommandTransformer],
 ):
-    """Exécute la prochaine commande en tant qu'un joueur (COMMANDE MJ)
+    """Exécute une commande en tant qu'un joueur (COMMANDE MJ)
 
     Args:
-        joueur: Joueur inscrit en tant que qui exécuter la prochaine commande.
-
-    Example:
-        ``!doas Vincent Croquette !vote Annie Colin``
+        joueur: Joueur inscrit en tant que qui exécuter une commande.
+        command: Commande à lancer.
     """
     if command.default_permissions:
         if command.default_permissions.manage_messages:
@@ -190,7 +188,7 @@ async def doas(
 
     async with DiscordJourney(journey.interaction, ephemeral=True, command_author=journey.member) as journey_:
         journey_.member = joueur.member
-        await command._callback._callback(journey_, **parameters)
+        await command._callback._callable(journey_, **parameters)
 
 
 @app_commands.command()

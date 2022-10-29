@@ -63,11 +63,11 @@ class LGCommandTree(app_commands.CommandTree):
         self._add_module_commands(special)
 
         # Commandes désactivées de base
-        self.disable_command("vote")
-        self.disable_command("votemaire")
-        self.disable_command("voteloups")
-        self.disable_command("haro")
-        self.disable_command("candid")
+        # self.disable_command("vote")
+        # self.disable_command("votemaire")
+        # self.disable_command("voteloups")
+        # self.disable_command("haro")
+        # self.disable_command("candid")
         self.disable_command("setup")
 
     def _add_module_commands(self, module: types.ModuleType) -> None:
@@ -169,7 +169,7 @@ class LGCommandTree(app_commands.CommandTree):
             case app_commands.CommandNotFound():
                 message = (
                     ":x: Hum, je ne connais pas cette commande  :thinking:\n"
-                    f"Utilise {tools.code('!help')} pour voir la liste des commandes."
+                    "Tape `/` puis clique sur une des commandes de la liste."
                 )
 
             case app_commands.MissingRole() if error.missing_role == config.Role.mj.name:

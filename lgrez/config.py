@@ -52,7 +52,7 @@ debut_saison: str = "32 plopembre"
 
 #: Si ``False``, le processus d'inscription ne demandera pas la
 #: chambre des joueurs, qui seront tous inscrits en :attr:`chambre_mj`
-#: (et la chambre ne sera pas indiquée dans ``!vivants``).
+#: (et la chambre ne sera pas indiquée dans ``/vivants``).
 demande_chambre: bool = True
 
 #: Nom par défaut de la :attr:`~.bdd.Joueur.chambre` des joueurs.
@@ -125,7 +125,7 @@ tdb_main_columns: tuple[str, str] = ("J", "Q")
 #: Noms de la première et de la dernière colonne de la zone de
 #: la feuille principale (:attr:`~lgrez.config.tdb_main_sheet`) du *Tableau
 #: de bord* contenant l'ancien état des informations des joueurs
-#: (avant ``!sync``).
+#: (avant ``/sync``).
 tdb_tampon_columns: tuple[str, str] = ("B", "I")
 
 
@@ -167,7 +167,7 @@ db_actions_sheet: str = "actions_brut"
 
 #: Mots-clés (en minuscule) utilisables (quelque soit la casse)
 #: pour arrêter une commande en cours d'exécution.
-stop_keywords: list[str] = ["stop", "!stop"]
+stop_keywords: list[str] = ["stop"]
 
 
 #: Mots-clés de rechargement (dans :attr:`.bdd.BaseAction.refill`)
