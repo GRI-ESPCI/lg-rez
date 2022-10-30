@@ -574,12 +574,12 @@ class Tache(base.TableBase):
     commande: str = autodoc_Column(
         sqlalchemy.String(2000),
         nullable=False,
-        doc="Texte à envoyer via le webhook (généralement une commande)",
+        doc="Nom complet ('command subcommand', sans le /) de la commande à exécuter",
     )
     parameters: dict | None = autodoc_Column(
         sqlalchemy.JSON(),
         nullable=True,
-        doc="Texte à envoyer via le webhook (généralement une commande)",
+        doc="Paramètres de la commande à exécuter",
     )
 
     _action_id = sqlalchemy.Column(

@@ -36,12 +36,17 @@ def add_action(
     if action.base.trigger_debut == ActionTrigger.temporel:
         # Temporel : on programme
         Tache(
-            timestamp=tools.next_occurrence(action.base.heure_debut), commande=f"open {action.id}", action=action
+            timestamp=tools.next_occurrence(action.base.heure_debut),
+            commande="open action",
+            parameters={"id": action.id},
+            action=action,
         ).add()
 
     elif action.base.trigger_debut == ActionTrigger.perma:
         # Perma : ON LANCE DIRECT (sera repoussé si jeu fermé)
-        Tache(timestamp=datetime.datetime.now(), commande=f"open {action.id}", action=action).add()
+        Tache(
+            timestamp=datetime.datetime.now(), commande="open action", parameters={"id": action.id}, action=action
+        ).add()
 
     return action
 
@@ -98,7 +103,7 @@ async def open_action(action: Action) -> None:
         if action.base.trigger_debut == ActionTrigger.temporel:
             # Programmation action du lendemain
             ts = tools.next_occurrence(action.base.heure_debut)
-            Tache(timestamp=ts, commande=f"open {action.id}", action=action).add()
+            Tache(timestamp=ts, commande="open action", parameters={"id": action.id}, action=action).add()
         return
 
     # Vérification role_actif
@@ -107,7 +112,7 @@ async def open_action(action: Action) -> None:
         await tools.log(f"{action} : role_actif == False, exit (reprogrammation si temporel).")
         if action.base.trigger_debut == ActionTrigger.temporel:
             ts = tools.next_occurrence(action.base.heure_debut)
-            Tache(timestamp=ts, commande=f"open {action.id}", action=action).add()
+            Tache(timestamp=ts, commande="open action", parameters={"id": action.id}, action=action).add()
         return
 
     # Vérification charges
@@ -145,8 +150,9 @@ async def open_action(action: Action) -> None:
 
     # Programmation remind / close
     if action.base.trigger_fin in [ActionTrigger.temporel, ActionTrigger.delta]:
-        Tache(timestamp=ts - datetime.timedelta(minutes=30), commande=f"remind {action.id}", action=action).add()
-        Tache(timestamp=ts, commande=f"close {action.id}", action=action).add()
+        remind_ts = ts - datetime.timedelta(minutes=30)
+        Tache(timestamp=remind_ts, commande="remind action", parameters={"id": action.id}, action=action).add()
+        Tache(timestamp=ts, commande="close action", parameters={"id": action.id}, action=action).add()
     elif action.base.trigger_fin == ActionTrigger.perma:
         # Action permanente : fermer pour le WE
         # ou rappel / réinitialisation chaque jour
@@ -154,10 +160,10 @@ async def open_action(action: Action) -> None:
         ts_pause = tools.debut_pause()
         if ts_matin < ts_pause:
             # Réopen le lendamain
-            Tache(timestamp=ts_matin, commande=f"open {action.id}", action=action).add()
+            Tache(timestamp=ts_matin, commande="open action", parameters={"id": action.id}, action=action).add()
         else:
             # Sauf si pause d'ici là
-            Tache(timestamp=ts_pause, commande=f"close {action.id}", action=action).add()
+            Tache(timestamp=ts_pause, commande="close action", parameters={"id": action.id}, action=action).add()
 
     # Information du joueur
     if action.is_open:  # déjà ouverte
@@ -234,11 +240,11 @@ async def close_action(action: Action) -> None:
         # Programmation prochaine ouverture
         if action.base.trigger_debut == ActionTrigger.temporel:
             ts = tools.next_occurrence(action.base.heure_debut)
-            Tache(timestamp=ts, commande=f"open {action.id}", action=action).add()
+            Tache(timestamp=ts, commande="open action", parameters={"id": action.id}, action=action).add()
         elif action.base.trigger_debut == ActionTrigger.perma:
             # Action permanente : ouvrir après le WE
             ts = tools.fin_pause()
-            Tache(timestamp=ts, commande=f"open {action.id}", action=action).add()
+            Tache(timestamp=ts, commande="open action", parameters={"id": action.id}, action=action).add()
 
     config.session.commit()
 
