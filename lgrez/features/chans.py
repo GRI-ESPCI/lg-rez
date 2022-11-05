@@ -246,7 +246,7 @@ async def invite(journey: DiscordJourney, *, joueur: app_commands.Transform[Joue
         await journey.send(f":x: {joueur.nom} est déjà dans ce boudoir !")
         return
 
-    mess = await journey.send(f"Invitation envoyée à {joueur.nom}.")
+    [mess] = await journey.send(f"Invitation envoyée à {joueur.nom}.")
     asyncio.create_task(_invite(joueur, boudoir, mess))
     # On envoie l'invitation en arrière-plan (libération du chan).
 
@@ -426,7 +426,7 @@ async def _mp(journey: DiscordJourney, *, joueur: Joueur):
 
     await journey.send(f":sunglasses: Ton boudoir a bien été créé : {boudoir.chan.mention}")
 
-    mess = await boudoir.chan.send(f"Invitation envoyée à {joueur.nom}.")
+    [mess] = await boudoir.chan.send(f"Invitation envoyée à {joueur.nom}.")
     asyncio.create_task(_invite(joueur, boudoir, mess))
     # On envoie l'invitation en arrière-plan (libération du chan).
 
