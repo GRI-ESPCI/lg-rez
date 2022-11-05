@@ -178,6 +178,9 @@ async def main(member: discord.Member) -> None:
             async with DiscordJourney(interaction) as journey:
                 await _inscription_process(journey, member, chan)
 
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
+
     await chan.send("Avant toute chose, finalisons ton inscription !", view=InscriptionView(timeout=None))
 
 

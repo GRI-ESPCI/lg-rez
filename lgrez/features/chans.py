@@ -166,6 +166,9 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
                 await journey.send("Invitation refusée.")
             self.stop()
 
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
+
     await joueur.private_chan.send(
         f"{joueur.member.mention} {boudoir.gerant.nom} t'as invité(e) à "
         f"rejoindre son boudoir : « {boudoir.nom} » !\nAcceptes-tu ?",

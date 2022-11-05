@@ -1,15 +1,15 @@
 from __future__ import annotations
+
 import asyncio
 import datetime
 import functools
-import traceback
 
 from typing import Callable, Coroutine, TypeVar
 
 import discord
 from discord import ui
 
-from lgrez import commons, config
+from lgrez import commons
 from lgrez.blocs import tools
 
 
@@ -20,6 +20,9 @@ class _DiscordJourneyView(ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return await self.journey._interaction_check(interaction)
+
+    async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: ui.Item) -> None:
+        raise error
 
 
 class _DiscordJourneyModal(ui.Modal):
@@ -33,6 +36,9 @@ class _DiscordJourneyModal(ui.Modal):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return await self.journey._interaction_check(interaction)
+
+    async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: ui.Item) -> None:
+        raise error
 
 
 def _create_button(input: ui.Button | str | discord.Emoji) -> ui.Button:

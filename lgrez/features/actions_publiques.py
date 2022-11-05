@@ -63,6 +63,9 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
             async with DiscordJourney(contre_haro_interaction, ephemeral=True) as contre_haro_journey:
                 await _haro(contre_haro_journey, joueur=moi)
 
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
+
     haro_message = await config.Channel.haros.send(
         f"(Psst, {joueur.member.mention} :3)", embed=emb, view=_HaroView(timeout=None)
     )
@@ -165,6 +168,9 @@ async def candid(journey: DiscordJourney):
                 except ValueError:
                     await vote_journey.send(":x: Oh, tu n'as pas le droit de vote, toi !")
                 await do_vote(vote_journey, Vote.maire, votant=votant, cible=joueur)
+
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
 
     candid_message = await config.Channel.haros.send(
         "Here comes a new challenger!", embed=emb, view=_CandidView(timeout=None)
