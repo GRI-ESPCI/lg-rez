@@ -160,7 +160,7 @@ class LGBot(discord.Client):
         """Initialize self"""
         super().__init__(
             intents=discord.Intents.all(),
-            activity=discord.Activity(type=discord.ActivityType.listening, name="vos demandes ➡️ /help"),
+            activity=discord.Activity(type=discord.ActivityType.listening, name="vos commandes"),
             **kwargs,
         )
 
