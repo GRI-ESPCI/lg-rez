@@ -14,7 +14,7 @@ from lgrez.blocs import tools
 
 
 class _DiscordJourneyView(ui.View):
-    def __init__(self, journey: DiscordJourney, timeout: float | None = 180):
+    def __init__(self, journey: DiscordJourney, timeout: float | None = None):
         self.journey = journey
         super().__init__(timeout=timeout)
 
@@ -23,7 +23,7 @@ class _DiscordJourneyView(ui.View):
 
 
 class _DiscordJourneyModal(ui.Modal):
-    def __init__(self, journey: DiscordJourney, title: str, timeout: float | None = 180):
+    def __init__(self, journey: DiscordJourney, title: str, timeout: float | None = None):
         self.journey = journey
         super().__init__(title=title, timeout=timeout)
 

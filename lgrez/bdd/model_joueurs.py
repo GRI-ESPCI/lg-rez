@@ -305,6 +305,7 @@ class CandidHaro(base.TableBase):
                     view.remove_item(component)
 
             await message.edit(view=view)
+            view.stop()
 
     def __repr__(self) -> str:
         """Return repr(self)."""

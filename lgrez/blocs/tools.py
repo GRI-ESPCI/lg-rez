@@ -305,10 +305,10 @@ _Table = typing.TypeVar("_Table", bound=bdd.base.TableBase)
 
 class _TableTransformerMixin:
     async def _transform(self, table: type[_Table], value: str) -> _Table:
-        elem = table.query.filter_by(nom=value).first()
-        if not elem:
+        elems = table.find_nearest(value, col="nom")
+        if not elems:
             raise commons.UserInputError(table.__name__.lower(), f"{table.__name__} introuvable en base : {value}")
-        return elem
+        return elems[0][0]
 
     async def _autocomplete(self, table: type[_Table], current: str, filtre=None) -> list[app_commands.Choice[str]]:
         return [

@@ -157,17 +157,19 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
                     await journey.send(f"Tu as bien rejoint {boudoir.chan.mention} !")
                 else:
                     await journey.send("Impossible de rejoindre le boudoir :(")
+            self.stop()
 
         @discord.ui.button(style=discord.ButtonStyle.secondary, emoji="❌")
         async def c_non(self, contre_haro_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(contre_haro_interaction) as journey:
                 await ack_invitation_response(f"{joueur.nom} a refusé l'invitation à rejoindre ce boudoir.")
                 await journey.send("Invitation refusée.")
+            self.stop()
 
     await joueur.private_chan.send(
         f"{joueur.member.mention} {boudoir.gerant.nom} t'as invité(e) à "
         f"rejoindre son boudoir : « {boudoir.nom} » !\nAcceptes-tu ?",
-        view=_InviteView(),
+        view=_InviteView(timeout=None),
     )
 
 
