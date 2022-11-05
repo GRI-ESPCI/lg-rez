@@ -179,14 +179,17 @@ async def doas(
     else:
         values = []
 
-    parameters = {parameter.name: value for parameter, value in zip(command.parameters, values)}
+    parameters = {
+        parameter.name: await parameter._Parameter__parent._annotation.transform(journey.interaction, value)
+        for parameter, value in zip(command.parameters, values)
+    }
 
     params_descr = " ".join(f"{name}:{value!r}" for name, value in parameters.items())
     await journey.send(
         f"/{command.qualified_name} {params_descr}", code=True, prefix=f":robot: Exécution en tant que {joueur.nom} :"
     )
 
-    async with DiscordJourney(journey.interaction, ephemeral=True, command_author=journey.member) as journey_:
+    async with DiscordJourney(journey.interaction, command_author=journey.member) as journey_:
         journey_.member = joueur.member
         await command._callback._callable(journey_, **parameters)
 
