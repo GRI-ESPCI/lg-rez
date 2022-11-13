@@ -289,6 +289,7 @@ async def open_action(journey: DiscordJourney, id: int):
     action = await _get_action("open", id)
     if not action:
         await journey.send(f"L'action #{id} est déjà ouverte !")
+        return
 
     await journey.send(f"Joueur concerné : {action.joueur}")
     await gestion_actions.open_action(action)
@@ -440,6 +441,7 @@ async def close_action(journey: DiscordJourney, id: int):
     action = await _get_action("close", id)
     if not action:
         await journey.send(f"L'action #{id} n'est pas ouverte !")
+        return
 
     await journey.send(f"Joueur concerné : {action.joueur}")
     await _close_action(action)
@@ -536,6 +538,7 @@ async def remind_action(journey: DiscordJourney, id: int):
     action = await _get_action("remind", id)
     if not action:
         await journey.send(f"L'action #{id} n'est pas ouverte !")
+        return
 
     await journey.send(f"Joueur concerné : {action.joueur}")
     await _remind_action(action)

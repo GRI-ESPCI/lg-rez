@@ -20,7 +20,15 @@ DESCRIPTION = """Commandes de planification, exécution, annulation de tâches""
 
 
 class TimestampTransformer(app_commands.Transformer):
+    FAST_CHOICES = {
+        "Demain 7h": "7:01",
+        "Demain 9h": "9:01",
+    }
+
     async def transform(self, interaction: discord.Interaction, value: str) -> datetime.datetime:
+        if value in self.FAST_CHOICES:
+            value = self.FAST_CHOICES[value]
+
         now = datetime.datetime.now()
 
         for format in ["%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y %Hh%M", "%d/%m/%Y %Hh"]:
@@ -45,10 +53,7 @@ class TimestampTransformer(app_commands.Transformer):
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         if not current:
-            return [
-                app_commands.Choice(name="Demain 7h", value="7:01"),
-                app_commands.Choice(name="Demain 9h", value="9:01"),
-            ]
+            return [app_commands.Choice(name=name, value=value) for name, value in self.FAST_CHOICES.items()]
         return []
 
 
@@ -136,19 +141,24 @@ async def post(
 @planif.command()
 @tools.mjs_only
 @journey_command
-async def command(journey: DiscordJourney, *, quand: app_commands.Transform[datetime.datetime, TimestampTransformer]):
+async def command(
+    journey: DiscordJourney,
+    *,
+    quand: app_commands.Transform[datetime.datetime, TimestampTransformer],
+    command: app_commands.Transform[app_commands.Command, tools.SubCommandTransformer],
+):
     """Planifie l'exécution d'une commande quelconque (COMMANDE MJ)
 
     Args:
         quand: Quand planifier la commande (date optionnelle, défaut aujourd’hui, année / minutes / secondes aussi).
+        command: Commande à lancer.
 
     Ne pas planifier de commandes avec confirmation / modale !
 
     Si la date spécifiée est dans le passé, la commande est planifiée pour le lendemain.
     """
-    interaction, _runner = await journey.catch_next_command("Exécuter la commande à planifier")
-    journey.interaction = interaction
-    await _planif(journey, quand, interaction.command, **dict(iter(interaction.namespace)))
+    _callback, parameters = await journey.command_parameters_modal(command, title_prefix=f"/planif {quand}")
+    await _planif(journey, quand, command, **parameters)
 
 
 @app_commands.command()

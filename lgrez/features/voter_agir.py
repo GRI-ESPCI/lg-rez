@@ -118,30 +118,32 @@ async def check_last_utilisation(
 DESCRIPTION = """Commandes de vote et d'action de rôle"""
 
 
-async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Joueur, ephemeral: bool = False):
+async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Joueur):
     match vote:
         case Vote.cond:
             vote_name = "le condamné du jour"
-            pour_contre = "conte"
+            pour_contre = "contre"
+            can_vote = votant.votant_village
         case Vote.maire:
             vote_name = "le nouveau maire"
             pour_contre = "pour"
+            can_vote = votant.votant_village
         case Vote.loups:
             vote_name = "la victime du soir"
             pour_contre = "contre"
+            can_vote = votant.votant_loups
 
     try:
         vaction = votant.action_vote(vote)
     except RuntimeError:
-        await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !", ephemeral=ephemeral)
+        await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !")
         return
 
-    # Vérification vote en cours
-    if not votant.votant_village:
-        await journey.send(":x: Tu n'as pas le droit de participer à ce vote.", ephemeral=ephemeral)
+    if not can_vote:
+        await journey.send(":x: Tu n'as pas le droit de participer à ce vote.")
         return
     if not vaction.is_open:
-        await journey.send(f":x: Pas de vote pour {vote_name} en cours !", ephemeral=ephemeral)
+        await journey.send(f":x: Pas de vote pour {vote_name} en cours !")
         return
 
     util = vaction.derniere_utilisation
@@ -151,20 +153,18 @@ async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Jo
         await journey.ok_cancel(
             f"{cible.nom} n'a pas (encore) subi ou posté de haro ! "
             "Si c'est toujours le cas à la fin du vote, ton vote sera compté comme blanc... \n"
-            "Veux-tu continuer ?",
-            ephemeral=ephemeral,
+            "Veux-tu continuer ?"
         )
     elif vote == Vote.maire and not CandidHaro.query.filter_by(joueur=cible, type=CandidHaroType.candidature).first():
         await journey.ok_cancel(
             f"{cible.nom} ne s'est pas (encore) présenté(e) ! "
             "Si c'est toujours le cas à la fin de l'élection, ton vote sera compté comme blanc... \n"
-            "Veux-tu continuer ?",
-            ephemeral=ephemeral,
+            "Veux-tu continuer ?"
         )
 
     if not vaction.is_open:
         # On revérifie, si ça a fermé entre temps !!
-        await journey.send(f":x: Le vote pour {vote_name} a fermé entre temps, pas de chance !", ephemeral=ephemeral)
+        await journey.send(f":x: Le vote pour {vote_name} a fermé entre temps, pas de chance !")
         return
 
     # Modification en base
@@ -178,13 +178,12 @@ async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Jo
     # Écriture dans sheet Données brutes
     await export_vote(vote, util)
 
-    await journey.send(
-        f"Vote {pour_contre} {tools.bold(cible.nom)} bien pris en compte.\n"
-        + tools.ital("Tu peux modifier ton vote autant que nécessaire avant sa fermeture."),
-        ephemeral=ephemeral,
+    confirm = f"Vote {pour_contre} {tools.bold(cible.nom)} bien pris en compte."
+    [message] = await journey.send(
+        f"{confirm}\n" + tools.ital("Tu peux modifier ton vote autant que nécessaire avant sa fermeture.")
     )
-    if journey.channel != votant.private_chan:
-        await votant.private_chan.send(f"Vote {pour_contre} {tools.bold(cible.nom)} bien pris en compte.")
+    if message.channel != votant.private_chan:
+        await votant.private_chan.send(confirm)
 
 
 @app_commands.command()
@@ -270,10 +269,23 @@ class ActionTransformer(app_commands.Transformer):
 class CibleTransformer(app_commands.Transformer):
     N_CIBLE = 0
 
+    ERROR_CHOICE = app_commands.Choice(name="⚠️ Remplir d'abord le paramètre 'action' ⚠️", value="error")
+    VALIDATE_CHOICE = app_commands.Choice(name="Valider", value="__NO_CIBLE")
+    YES_CHOICE = app_commands.Choice(name="Oui", value="yes")
+    NO_CHOICE = app_commands.Choice(name="Non", value="no")
+
+    PHRASE_CHOICE_NAME_PREFIX = "🔽"
+    PHRASE_CHOICE_VALUE = "__PHRASE"
+
     async def transform(self, interaction: discord.Interaction, value: str) -> Joueur | Role | Camp | bool | str | None:
-        if value == "__NO_CIBLE":
+        if value in (self.VALIDATE_CHOICE.name, self.VALIDATE_CHOICE.value):
             return None
-        if value == "__PHRASE":
+        if value in (self.ERROR_CHOICE.name, self.ERROR_CHOICE.value):
+            raise commons.UserInputError(
+                f"cible_{self.N_CIBLE}" if self.N_CIBLE else "cible",
+                "Paramètre `action` non rempli !",
+            )
+        if value.startswith(self.PHRASE_CHOICE_NAME_PREFIX) or value == self.PHRASE_CHOICE_VALUE:
             raise commons.UserInputError(
                 f"cible_{self.N_CIBLE}" if self.N_CIBLE else "cible",
                 "L'en-tête d'explication des choix n'est pas un choix valide !",
@@ -295,21 +307,21 @@ class CibleTransformer(app_commands.Transformer):
             case CibleType.camp:
                 return await tools.CampTransformer().transform(interaction, value)
             case CibleType.booleen:
-                return value == "yes"
+                return value in (self.YES_CHOICE.name, self.YES_CHOICE.value)
             case CibleType.texte:
                 return value
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         action_id = interaction.namespace.action
         if not action_id:
-            return [app_commands.Choice(name="⚠️ Remplir d'abord le paramètre 'action' ⚠️", value="error")]
+            return [self.ERROR_CHOICE]
 
         action: Action = Action.query.get(int(action_id))
         try:
             base_ciblage = action.base.base_ciblages[self.N_CIBLE]
         except IndexError:
             # Pas autant de ciblages pour cette action
-            return [app_commands.Choice(name="Valider", value="__NO_CIBLE")]
+            return [self.VALIDATE_CHOICE]
 
         match base_ciblage.type:
             case CibleType.joueur:
@@ -323,11 +335,16 @@ class CibleTransformer(app_commands.Transformer):
             case CibleType.camp:
                 choices = await tools.CampTransformer().autocomplete(interaction, current)
             case CibleType.booleen:
-                choices = [app_commands.Choice(name="Oui", value="yes"), app_commands.Choice(name="Non", value="no")]
+                choices = [self.YES_CHOICE, self.NO_CHOICE]
             case CibleType.texte:
                 choices = [app_commands.Choice(name="[Texte libre]", value=current)]
 
-        return [app_commands.Choice(name=f"🔽  {base_ciblage.phrase} 🔽"[:100], value="__PHRASE"), *choices[:24]]
+        return [
+            app_commands.Choice(
+                name=f"{self.PHRASE_CHOICE_NAME_PREFIX}  {base_ciblage.phrase} 🔽"[:100], value=self.PHRASE_CHOICE_VALUE
+            ),
+            *choices[:24],
+        ]
 
 
 class Cible2Transformer(CibleTransformer):

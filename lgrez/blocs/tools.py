@@ -351,18 +351,28 @@ class MortTransformer(app_commands.Transformer, _TableTransformerMixin):
 
 
 class _CandidHaroTransformerMixin(_TableTransformerMixin):
+    OK_SUFFIX = ""
+    NOK_SUFFIX = ""
+
+    async def _transform(self, table: type[_Table], value: str) -> _Table:
+        await super()._transform(table, value.removesuffix(self.OK_SUFFIX).removesuffix(self.NOK_SUFFIX))
+
     async def get_choices(
         self, current: str, candid_haro_type: CandidHaroType, ok_mark: str, nok_mark: str
     ) -> list[app_commands.Choice[str]]:
         harotes = {haro.joueur for haro in CandidHaro.query.filter_by(type=candid_haro_type).all()}
 
         if len(current) <= 2 and harotes:
-            return [app_commands.Choice(name=f"{joueur.nom} ({ok_mark})", value=joueur.nom) for joueur in harotes][:25]
+            return [app_commands.Choice(name=f"{joueur.nom}{self.OK_SUFFIX}", value=joueur.nom) for joueur in harotes][
+                :25
+            ]
 
         proches = super().get_elems(Joueur, current, filtre=Joueur.est_vivant)
-        choix_proches = [app_commands.Choice(name=f"{joueur.nom} ({nok_mark})", value=joueur.nom) for joueur in proches]
+        choix_proches = [
+            app_commands.Choice(name=f"{joueur.nom}{self.NOK_SUFFIX}", value=joueur.nom) for joueur in proches
+        ]
         choix_harotes = [
-            app_commands.Choice(name=f"{joueur.nom} ({ok_mark})", value=joueur.nom)
+            app_commands.Choice(name=f"{joueur.nom}{self.OK_SUFFIX}", value=joueur.nom)
             for joueur in harotes
             if joueur not in proches
         ]
@@ -370,13 +380,19 @@ class _CandidHaroTransformerMixin(_TableTransformerMixin):
 
 
 class HaroteTransformer(VivantTransformer, _CandidHaroTransformerMixin):
+    OK_SUFFIX = f" ✅ haro"
+    NOK_SUFFIX = f" ⚠️ pas de haro"
+
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await super().get_choices(current, CandidHaroType.haro, "✅ haro", "⚠️ pas de haro")
+        return await super().get_choices(current, CandidHaroType.haro, "")
 
 
 class CandidatTransformer(VivantTransformer, _CandidHaroTransformerMixin):
+    OK_SUFFIX = f" ✅ candidat"
+    NOK_SUFFIX = f" ⚠️ pas candidat"
+
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await super().get_choices(current, CandidHaroType.candidature, "✅ candidat", "⚠️ pas candidat")
+        return await super().get_choices(current, CandidHaroType.candidature)
 
 
 class RoleTransformer(app_commands.Transformer, _TableTransformerMixin):
@@ -399,6 +415,37 @@ class CampTransformer(app_commands.Transformer, _TableTransformerMixin):
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         return await super()._autocomplete(Camp, current, filtre=Camp.public == True)
+
+
+class CommandTransformer(app_commands.Transformer):
+    @staticmethod
+    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
+        if getattr(interaction.namespace, "mode") == "enable":
+            return config.bot.tree.disabled_commands
+        else:
+            return config.bot.tree.enabled_commands
+
+    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
+        return self._get_commands(interaction)[value]
+
+    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
+        ][:25]
+
+
+class SubCommandTransformer(app_commands.Transformer):
+    @staticmethod
+    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
+        return config.bot.tree.enabled_commands_and_subcommands
+
+    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
+        return self._get_commands(interaction)[value]
+
+    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
+        ][:25]
 
 
 # ---------------------------------------------------------------------------
@@ -867,7 +914,7 @@ async def _send_messages(
                 joueur = Joueur.from_member(author)
             except ValueError:
                 raise RuntimeError(
-                    "Interaction context unavailable or expired, ephemeral message and no private chan"
+                    "Interaction context unavailable or expired, ephemeral message and author is not a player or MJ"
                 ) from None
             channel = joueur.private_chan
 

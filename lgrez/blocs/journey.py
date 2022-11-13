@@ -4,10 +4,10 @@ import asyncio
 import datetime
 import functools
 
-from typing import Callable, Coroutine, TypeVar
+from typing import Any, Callable, Coroutine, TypeVar
 
 import discord
-from discord import ui
+from discord import ui, app_commands
 
 from lgrez import commons
 from lgrez.blocs import tools
@@ -399,6 +399,28 @@ class DiscordJourney:
 
         return [input.value for input in inputs]
 
+    async def command_parameters_modal(
+        self, command: app_commands.Command, title_prefix: str = ""
+    ) -> tuple[Callable[[DiscordJourney], None], dict[str, Any]]:
+        """Open a modal allowing to chose parameters values for a command."""
+        if command.parameters:
+            values = await self.modal(
+                f"{title_prefix} /{command.qualified_name}",
+                *[
+                    ui.TextInput(label=param.display_name, placeholder=param.description, required=param.required)
+                    for param in command.parameters
+                ],
+            )
+        else:
+            values = []
+
+        callback = command._callback._callable
+        parameters = {
+            parameter.name: await parameter._Parameter__parent._annotation.transform(self.interaction, value)
+            for parameter, value in zip(command.parameters, values)
+        }
+        return callback, parameters
+
     async def _catch_next_command(self) -> tuple[discord.Interaction, Callable[[DiscordJourney], Coroutine]]:
         class _Awaitable:
             # Oh, well... let's say it just work?
@@ -427,7 +449,7 @@ class DiscordJourney:
     async def catch_next_command(
         self, next_command_message: str
     ) -> tuple[discord.Interaction, Callable[[DiscordJourney], Coroutine]]:
-        """Catch the next command in the channel (or abort it with a cancel button).
+        """[WIP - does not work?] Catch the next command in the channel (or abort it with a cancel button).
 
         Args:
             next_command_message: The message describing which command to send next.

@@ -171,7 +171,7 @@ async def open_action(action: Action) -> None:
             f"{tools.montre()}  Rappel : tu peux utiliser quand tu le souhaites "
             f"ton action {tools.code(action.base.slug)} !  {config.Emoji.action}\n"
             + (f"Tu as jusqu'à {heure_fin} pour le faire. \n" if heure_fin else "")
-            + tools.ital(f"Tape {tools.code('/action (ce que tu veux faire)')} ou utilise la réaction pour agir.")
+            + tools.ital(f"Utilise `/action` pour agir.")
         )
     else:
         # on ouvre !
@@ -182,7 +182,7 @@ async def open_action(action: Action) -> None:
             f"{tools.montre()}  Tu peux maintenant utiliser ton action "
             f"{tools.code(action.base.slug)} !  {config.Emoji.action}\n"
             + (f"Tu as jusqu'à {heure_fin} pour le faire. \n" if heure_fin else "")
-            + tools.ital(f"Tape {tools.code('/action (ce que tu veux faire)')} ou utilise la réaction pour agir.")
+            + tools.ital(f"Utilise `/action` pour agir.")
         )
 
     config.session.commit()

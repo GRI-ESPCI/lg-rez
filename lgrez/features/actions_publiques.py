@@ -56,6 +56,7 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
                     votant = Joueur.from_member(vote_journey.member)
                 except ValueError:
                     await vote_journey.send(":x: Tu n'as pas le droit de vote, toi")
+                    return
                 await do_vote(vote_journey, Vote.cond, votant=votant, cible=joueur)
 
         @discord.ui.button(label=f"Contre-haro", style=discord.ButtonStyle.danger, emoji=config.Emoji.ha)

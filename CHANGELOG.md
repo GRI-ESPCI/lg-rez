@@ -9,6 +9,12 @@ to benefit Sphinx internal links to Python objects:*
 https://lg-rez.readthedocs.io/fr/2.2.0/changelog.html
 
 
+## 3.1.0 - 2022-11-13
+
+  - Changed behavior of "meta" commands (doas, planif)...
+  - A lot of bug fixes
+
+
 ## 3.0.0 - 2022-10-12
 
   - Biggest update to date, switching from "bot commands" to Discord built-in

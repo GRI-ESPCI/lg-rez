@@ -21,37 +21,6 @@ from lgrez.bdd import *  # toutes les tables dans globals()
 from lgrez.blocs.journey import DiscordJourney, journey_command
 
 
-class CommandTransformer(app_commands.Transformer):
-    @staticmethod
-    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
-        if getattr(interaction.namespace, "mode") == "enable":
-            return config.bot.tree.disabled_commands
-        else:
-            return config.bot.tree.enabled_commands
-
-    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
-        return self._get_commands(interaction)[value]
-
-    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return [
-            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
-        ][:25]
-
-
-class SubCommandTransformer(app_commands.Transformer):
-    @staticmethod
-    def _get_commands(interaction: discord.Interaction) -> dict[str, app_commands.Command]:
-        return config.bot.tree.enabled_commands_and_subcommands
-
-    async def transform(self, interaction: discord.Interaction, value: str) -> app_commands.Command:
-        return self._get_commands(interaction)[value]
-
-    async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return [
-            app_commands.Choice(name=name, value=name) for name in self._get_commands(interaction) if current in name
-        ][:25]
-
-
 DESCRIPTION = """Commandes spéciales (méta-commandes et expérimentations)"""
 
 
@@ -149,7 +118,7 @@ async def doas(
     journey: DiscordJourney,
     *,
     joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],
-    command: app_commands.Transform[app_commands.Command, SubCommandTransformer],
+    command: app_commands.Transform[app_commands.Command, tools.SubCommandTransformer],
 ):
     """Exécute une commande en tant qu'un joueur (COMMANDE MJ)
 
@@ -168,21 +137,7 @@ async def doas(
             await journey.send(f":x: Commande `/{command.qualified_name}` réservée aux joueurs en vie !")
             return
 
-    if command.parameters:
-        values = await journey.modal(
-            f"/doas {joueur.nom} /{command.qualified_name}",
-            *[
-                discord.ui.TextInput(label=param.display_name, placeholder=param.description, required=param.required)
-                for param in command.parameters
-            ],
-        )
-    else:
-        values = []
-
-    parameters = {
-        parameter.name: await parameter._Parameter__parent._annotation.transform(journey.interaction, value)
-        for parameter, value in zip(command.parameters, values)
-    }
+    callback, parameters = await journey.command_parameters_modal(command, title_prefix=f"/doas {joueur.nom}")
 
     params_descr = " ".join(f"{name}:{value!r}" for name, value in parameters.items())
     await journey.send(
@@ -191,20 +146,24 @@ async def doas(
 
     async with DiscordJourney(journey.interaction, command_author=journey.member) as journey_:
         journey_.member = joueur.member
-        await command._callback._callable(journey_, **parameters)
+        await callback(journey_, **parameters)
 
 
 @app_commands.command()
 @tools.mjs_only
 @journey_command
-async def secret(journey: DiscordJourney):
-    """Exécute la prochaine commande en mode "éphémère" (les messages ne s'affichent que pour le lanceur).
+async def secret(
+    journey: DiscordJourney,
+    command: app_commands.Transform[app_commands.Command, tools.SubCommandTransformer],
+):
+    """Exécute une commande en mode "éphémère" (les messages ne s'affichent que pour le lanceur).
 
     Utile notamment pour faire des commandes dans un channel public, pour que la commande soit invisible.
     """
-    interaction, runner = await journey.catch_next_command("Exécuter la commande à rendre silencieuse")
-    async with DiscordJourney(interaction, ephemeral=True) as _journey:
-        await runner(_journey)
+    callback, parameters = await journey.command_parameters_modal(command, title_prefix=f"/secret")
+
+    async with DiscordJourney(journey.interaction, ephemeral=True) as journey_:
+        await callback(journey_, **parameters)
 
 
 @app_commands.command()
@@ -391,7 +350,7 @@ async def setup(journey: DiscordJourney):
 async def command(
     journey: DiscordJourney,
     mode: Literal["enable", "disable"],
-    command: app_commands.Transform[app_commands.Command | app_commands.Group, CommandTransformer],
+    command: app_commands.Transform[app_commands.Command | app_commands.Group, tools.CommandTransformer],
 ):
     """✨ Active ou désactive une commande (COMMANDE MJ)
 

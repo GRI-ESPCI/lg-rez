@@ -300,8 +300,12 @@ async def actions(journey: DiscordJourney, *, joueur: app_commands.Transform[Jou
         case "edit":
             cooldown, charges = await journey.modal(
                 "Modifier l'action",
-                discord.ui.TextInput(label="Cooldown (nombre entier)", max_length=2, default=str(action.cooldown)),
-                discord.ui.TextInput(label="Charges (vide = illimité)", required=False, default=str(action.charges)),
+                discord.ui.TextInput(
+                    label="Cooldown (nombre entier)", max_length=2, default=str(action.cooldown or "")
+                ),
+                discord.ui.TextInput(
+                    label="Charges (vide = illimité)", required=False, default=str(action.charges or "")
+                ),
             )
             action.cooldown = int(cooldown)
             action.charges = int(charges) if charges else None
