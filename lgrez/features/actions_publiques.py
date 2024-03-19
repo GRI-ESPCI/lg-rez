@@ -215,3 +215,97 @@ async def wipe(journey: DiscordJourney, quoi: Literal["haros", "candids"]):
 
     await journey.send("Fait.")
     await tools.log(f"/wipe : {len(candid_haros)} {quoi} supprimés")
+ 
+ 
+ 
+  
+async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
+    moi = Joueur.from_member(journey.member)
+    try:
+        vaction = joueur.action_vote(Vote.cond)
+    except RuntimeError:
+        await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !")
+        return
+
+    if not vaction.is_open:
+        await journey.send(":x: Pas de vote pour le condamné du jour en cours !")
+        return
+
+    (motif,) = await journey.modal(
+        f"Accusation contre {joueur.nom}",
+    )
+
+    emb = discord.Embed(
+        title=(f"**{config.Emoji.ha}{config.Emoji.ro} contre {joueur.nom} !**"),
+        color=0xFF0000,
+    )
+    emb.set_author(name=f"L'Imprimeur en a gros 😡😡")
+    emb.set_thumbnail(url=config.Emoji.bucher.url)
+
+    await journey.ok_cancel("C'est tout bon ?", embed=emb)
+
+    class _HaroView(discord.ui.View):
+        @discord.ui.button(
+            label=f"Voter contre {joueur.nom}"[:80], style=discord.ButtonStyle.primary, emoji=config.Emoji.bucher
+        )
+        async def vote(self, vote_interaction: discord.Interaction, button: discord.ui.Button):
+            async with DiscordJourney(vote_interaction, ephemeral=True) as vote_journey:
+                try:
+                    votant = Joueur.from_member(vote_journey.member)
+                except ValueError:
+                    await vote_journey.send(":x: Tu n'as pas le droit de vote, toi")
+                    return
+                await do_vote(vote_journey, Vote.cond, votant=votant, cible=joueur)
+
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
+
+    haro_message = await config.Channel.haros.send(
+        f"(Psst, {joueur.member.mention} :3)", embed=emb, view=_HaroView(timeout=None)
+    )
+    await config.Channel.debats.send(
+        f"{config.Emoji.ha}{config.Emoji.ro} de {journey.member.mention} sur {joueur.member.mention} ! "
+        f"Vous en pensez quoi vous ? (détails sur {config.Channel.haros.mention})"
+    )
+
+    haro = CandidHaro(joueur=joueur, type=CandidHaroType.haro, message_id=haro_message.id)
+    CandidHaro.add(haro)
+
+    if journey.channel != config.Channel.haros:
+        await journey.send(f"Allez, c'est parti ! ({config.Channel.haros.mention})")
+
+
+@app_commands.command()
+@tools.mjs_only
+@tools.private()
+@journey_command
+async def imprimeur(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.VivantTransformer]):
+    """Lance publiquement un haro contre la personne visée par l'imprimeur.
+
+    Args:
+        joueur: Le joueur ou la joueuse à accuser de tous les maux.
+
+    Cette commande n'est utilisable que lorsqu'un vote pour le condamné est en cours.
+    """
+    await _imprimeur(journey, joueur=joueur)
+
+
+@app_commands.context_menu(name="Lancer un haro contre ce joueur")
+@tools.mjs_only
+@journey_context_menu
+async def haro_menu(journey: DiscordJourney, member: discord.Member):
+    if member.top_role >= config.Role.mj:
+        await journey.send(":x: Attends deux secondes, tu pensais faire quoi là ?")
+        return
+
+    if member == config.bot.user:
+        await journey.send(":x: Tu ne peux pas haro le bot, enfin !!!")
+        return
+
+    try:
+        joueur = Joueur.from_member(member)
+    except ValueError:
+        await journey.send(":x: Hmm, ce joueur n'a pas l'air inscrit !")
+        return
+
+    await _haro(journey, joueur=joueur)

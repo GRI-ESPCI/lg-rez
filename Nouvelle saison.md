@@ -1,6 +1,6 @@
 # Mise en place d'une nouvelle saison
 
-Protocole détaillé (penser à le mettre à jour) - Loïc Simon, avril 2022
+Protocole détaillé (penser à le mettre à jour) - Loïc Simon, avril 2022 - actualisé par Théo Sabouret et Maïa Douillard mars 2024
 
 ## Création du serveur
 
@@ -15,7 +15,7 @@ Pour la suite, on suppose que le bot tourne sur la Griway : sinon, adaptez, vous
 
 - Se connecter à la Griway et `sudo su lgrez`
 - Dans `/home/lgrez`, copier le dossier de la dernière saison (`cp -r P22 H23` par ex.)
-- Dans le nouveau dossier, modifier le fichier `.env` pour mettre à jour la variable `LGREZ_SERVER_ID`
+- Dans le nouveau dossier, modifier le fichier `.env` (fichier caché ne pas s'inquiéter  pour check faire `ls -a`) pour mettre à jour la variable `LGREZ_SERVER_ID`
   avec l'ID du serveur récupéré précédemment
 - Sudo-modifier le fichier `/etc/supervisor/conf.d/lgrez.conf` avec la nouvelle saison.
   **ATTENTION 4 EMPLACEMENTS À CHANGER !**
@@ -25,7 +25,7 @@ Le bot devrait alors changer de serveur et devrait alors poster un message dans 
 (si non, investiguer)
 
 - Tant qu'on est là, modifier le fichier `start_bot.py` avec notamment à la toute fin la date de début de saison
-  et la chambre MJ (peut être fait ultérieurement)
+  et la chambre MJ (peut être fait ultérieurement) (accessoirement on peut créer ici des rôles de plus si besoin)
 - Mettre à jour le bot, le cas échéant : `../env/bin/pip install --upgrade lg-rez`
 
 ## Setup de la BDD
@@ -35,8 +35,9 @@ Le bot devrait alors changer de serveur et devrait alors poster un message dans 
 - Stop le bot : `sudo supervisorctl stop lgrez`
 - Vider les tables de saison, et celles qui seront remplies plus tard par `/fillroles` :
   ```
-  psql -d lgrez -c 'DROP joueurs, bouderies, boudoirs, taches, camps, baseactions, _baseactions_roles, ciblages, utilisations, actions RESTART IDENTITY CASCADE;'
+  psql -d lgrez -c 'TRUNCATE TABLE joueurs, bouderies, boudoirs, taches, camps, baseactions, _baseactions_roles, ciblages, utilisations, actions RESTART IDENTITY CASCADE;'
   ```
+- Relancer le bot : `sudo supervisorctl start lgrez`
 
 ## Setup du serveur
 

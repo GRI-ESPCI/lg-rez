@@ -9,6 +9,11 @@ to benefit Sphinx internal links to Python objects:*
 https://lg-rez.readthedocs.io/fr/2.2.0/changelog.html
 
 
+## 3.2.0 - 2024-03-19
+
+  - Adding `imprimeur` action
+  - Changed ludopathe pattern
+
 ## 3.1.0 - 2022-11-13
 
   - Changed behavior of "meta" commands (doas, planif)...
