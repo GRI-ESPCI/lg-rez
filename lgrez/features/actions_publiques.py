@@ -220,7 +220,6 @@ async def wipe(journey: DiscordJourney, quoi: Literal["haros", "candids"]):
  
   
 async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
-    moi = Joueur.from_member(journey.member)
     try:
         vaction = joueur.action_vote(Vote.cond)
     except RuntimeError:
@@ -277,10 +276,9 @@ async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
 
 @app_commands.command()
 @tools.mjs_only
-@tools.private()
 @journey_command
 async def imprimeur(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.VivantTransformer]):
-    """Lance publiquement un haro contre la personne visée par l'imprimeur.
+    """Lance publiquement un haro contre la personne visée par l'imprimeur. (COMMANDE MJ)
 
     Args:
         joueur: Le joueur ou la joueuse à accuser de tous les maux.
