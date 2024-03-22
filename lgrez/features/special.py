@@ -193,7 +193,6 @@ async def apropos(journey: DiscordJourney):
 
 
 @app_commands.command()
-@app_commands.check(lambda interaction: not config.is_setup)
 @journey_command
 async def setup(journey: DiscordJourney):
     """✨ Prépare un serveur nouvellement crée (COMMANDE MJ)
