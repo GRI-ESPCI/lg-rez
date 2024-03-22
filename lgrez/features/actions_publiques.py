@@ -309,8 +309,8 @@ async def haro_menu(journey: DiscordJourney, member: discord.Member):
     await _haro(journey, joueur=joueur)
     
     
-@app_commands.command()
-@journey_command
+@app_commands.context_menu()
+@journey_context_menu
 async def setup(journey: DiscordJourney):
     """✨ Prépare un serveur nouvellement crée (COMMANDE MJ)
 
