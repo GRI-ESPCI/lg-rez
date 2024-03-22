@@ -365,3 +365,156 @@ async def command(
         if config.bot.tree.disable_command(command.qualified_name):
             await config.bot.tree.sync(guild=config.guild)
         await journey.send(f"Commande `/{command.qualified_name}` désactivée.")
+        
+        
+@app_commands.command()
+@tools.mj_only
+@journey_command
+async def setup2(journey: DiscordJourney):
+    """✨ Prépare un serveur nouvellement crée (COMMANDE MJ)
+
+    À n'utiliser que dans un nouveau serveur, pour créer les rôles, catégories, salons et emojis nécessaires.
+    """
+    await journey.ok_cancel("Setup le serveur ?")
+
+    original_channels = list(config.guild.channels)
+
+    structure = config.server_structure
+
+    # Création rôles
+    await journey.send("Création des rôles...")
+    roles = {}
+    for slug, role in structure["roles"].items():
+        roles[slug] = tools.role(role["name"], must_be_found=False)
+        if roles[slug]:
+            continue
+        if isinstance(role["permissions"], list):
+            perms = discord.Permissions(**{perm: True for perm in role["permissions"]})
+        else:
+            perms = getattr(discord.Permissions, role["permissions"])()
+        roles[slug] = await config.guild.create_role(
+            name=role["name"],
+            color=int(role["color"], base=16),
+            hoist=role["hoist"],
+            mentionable=role["mentionable"],
+            permissions=perms,
+        )
+    # Modification @everyone
+    roles["@everyone"] = tools.role("@everyone")
+    await roles["@everyone"].edit(
+        permissions=discord.Permissions(**{perm: True for perm in structure["everyone_permissions"]})
+    )
+    await journey.send(f"{len(roles)} rôles créés.")
+
+    # Assignation rôles
+    for member in config.guild.members:
+        await member.add_roles(roles["bot"] if member == config.bot.user else roles["mj"])
+
+    # Création catégories et channels
+    await journey.send("Création des salons...")
+    categs = {}
+    channels = {}
+    for slug, categ in structure["categories"].items():
+        categs[slug] = tools.channel(categ["name"], must_be_found=False)
+        if not categs[slug]:
+            categs[slug] = await config.guild.create_category(
+                name=categ["name"],
+                overwrites={
+                    roles[role]: discord.PermissionOverwrite(**perms) for role, perms in categ["overwrites"].items()
+                },
+            )
+        for position, (chan_slug, channel) in enumerate(categ["channels"].items()):
+            channels[chan_slug] = tools.channel(channel["name"], must_be_found=False)
+            if channels[chan_slug]:
+                continue
+            channels[chan_slug] = await categs[slug].create_text_channel(
+                name=channel["name"],
+                topic=channel["topic"],
+                position=position,
+                overwrites={
+                    roles[role]: discord.PermissionOverwrite(**perms) for role, perms in channel["overwrites"].items()
+                },
+            )
+        for position, (chan_slug, channel) in enumerate(categ["voice_channels"].items()):
+            channels[chan_slug] = tools.channel(channel["name"], must_be_found=False)
+            if channels[chan_slug]:
+                continue
+            channels[chan_slug] = await categs[slug].create_voice_channel(
+                name=channel["name"],
+                position=position,
+                overwrites={roles[role]: discord.PermissionOverwrite(**perms) for role, perms in channel["overwrites"]},
+            )
+    await journey.send(f"{len(channels)} salons créés dans {len(categs)} catégories.")
+
+    # Création emojis
+    await journey.send("Import des emojis... (oui c'est très long)")
+
+    async def _create_emoji(name: str, data: bytes):
+        can_use = None
+        if restrict := structure["emojis"]["restrict_roles"].get(name):
+            can_use = [roles[role] for role in restrict]
+        await config.guild.create_custom_emoji(
+            name=name,
+            image=data,
+            roles=can_use,
+        )
+
+    n_emojis = 0
+    if structure["emojis"]["drive"]:
+        folder_id = structure["emojis"]["folder_path_or_id"]
+        for file in gsheets.get_files_in_folder(folder_id):
+            if file["extension"] != "png":
+                continue
+            name = file["name"].removesuffix(".png")
+            if tools.emoji(name, must_be_found=False):
+                continue
+            data = gsheets.download_file(file["file_id"])
+            await _create_emoji(name, data)
+            n_emojis += 1
+    else:
+        root = structure["emojis"]["folder_path_or_id"]
+        for file in os.scandir(root):
+            name, extension = os.path.splitext(file.name)
+            if extension != ".png":
+                continue
+            if tools.emoji(name, must_be_found=False):
+                continue
+            with open(file.path, "rb") as fh:
+                data = fh.read()
+            await _create_emoji(name, data)
+            n_emojis += 1
+    await journey.send(f"{n_emojis} emojis importés.")
+
+    # Paramètres généraux du serveur
+    await journey.send("Configuration du serveur...")
+    if not structure["icon"]:
+        icon_data = None
+    elif structure["icon"]["drive"]:
+        file_id = structure["icon"]["png_path_or_id"]
+        icon_data = gsheets.download_file(file_id)
+    else:
+        with open(structure["icon"]["png_path_or_id"], "rb") as fh:
+            icon_data = fh.read()
+
+    await config.guild.edit(
+        name=structure["name"],
+        icon=icon_data,
+        afk_channel=channels.get(structure["afk_channel"]),
+        afk_timeout=int(structure["afk_timeout"]),
+        verification_level=discord.VerificationLevel[structure["verification_level"]],
+        default_notifications=discord.NotificationLevel[structure["default_notifications"]],
+        explicit_content_filter=discord.ContentFilter[structure["explicit_content_filter"]],
+        system_channel=channels[structure["system_channel"]],
+        system_channel_flags=discord.SystemChannelFlags(**structure["system_channel_flags"]),
+        preferred_locale=structure["preferred_locale"],
+        reason="Guild set up!",
+    )
+    await journey.send(f"Fin de la configuration !")
+
+    config.is_setup = True
+
+    # Delete current chan (will also trigger on_ready)
+    await journey.yes_no("Terminé ! Ce salon va être détruit (ce n'est pas une question).")
+    for channel in original_channels:
+        await channel.delete()
+
