@@ -20,7 +20,10 @@ from lgrez.features import gestion_ia, inscription
 
 
 async def _check_and_prepare_objects(bot: LGBot) -> None:
-
+        
+     if not config.is_setup:
+        return
+        
     if len(config.guild.channels) < 20:
         config.is_setup = False
         # *really* needed objects, even if nothing is setup
@@ -28,9 +31,6 @@ async def _check_and_prepare_objects(bot: LGBot) -> None:
         await tools.log("Server not setup - call `/setup` !")
         config.bot.tree.enable_command("setup")
         await config.bot.tree.sync(guild=config.guild)
-        return
-        
-     if not config.is_setup:
         return
 
     errors = []
