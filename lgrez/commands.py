@@ -68,7 +68,7 @@ class LGCommandTree(app_commands.CommandTree):
         # self.disable_command("voteloups")
         # self.disable_command("haro")
         # self.disable_command("candid")
-        self.disable_command("setup")
+        # self.disable_command("setup")
 
     def _add_module_commands(self, module: types.ModuleType) -> None:
         for name, value in inspect.getmembers(module):
