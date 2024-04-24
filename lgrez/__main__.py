@@ -179,7 +179,8 @@ This token gives anyone full access to your bot, so don't leak it!
         LGREZ_DISCORD_TOKEN = input("Discord client secret: ")
 
         print("Testing connection...")
-        client = discord.Client()
+        intents=discord.Intents.all()
+        client = discord.Client(intents=intents)
         loop = asyncio.new_event_loop()
         try:
             loop.run_until_complete(client.login(LGREZ_DISCORD_TOKEN))
@@ -187,7 +188,7 @@ This token gives anyone full access to your bot, so don't leak it!
             report_error(e)
         else:
             print("Connected!")
-            loop.run_until_complete(client.logout())
+            loop.run_until_complete(client.close())
             ok = True
             time.sleep(1)
         finally:
@@ -213,8 +214,8 @@ https://discord.new/RPGXChXXcKQZ
         LGREZ_SERVER_ID = input("Server ID (Server settings / Widget): ")
 
         try:
-            if not (LGREZ_SERVER_ID.isdigit() and len(LGREZ_SERVER_ID) == 18):
-                raise ValueError("Server ID must be a 18-digits number")
+            if not (LGREZ_SERVER_ID.isdigit() and (len(LGREZ_SERVER_ID) == 18 or len(LGREZ_SERVER_ID) == 19 )):
+                raise ValueError("Server ID must be a 18 or 19-digits number")
         except Exception as e:
             report_error(e)
         else:
@@ -276,6 +277,7 @@ Open the JSON file, copy its contents and delete it.
         LGREZ_GCP_CREDENTIALS = input("JSON key (one-line file contents): ")
 
         print("Authentificating...")
+        print(json.loads(LGREZ_GCP_CREDENTIALS))
         try:
             scope = ["https://spreadsheets.google.com/feeds"]
             with warnings.catch_warnings(record=True) as warns:
@@ -436,7 +438,7 @@ not crashed -- pretty unlikely, but it might always happen; see also
 "output_liveness" customization option in the docs:
 https://lg-rez.readthedocs.io/fr/2.0.0/config.html#lgrez.config.output_liveness
 
-You can no try to interact with the bot!
+You can now try to interact with the bot!
 (For your first tests, note that the bot ignore every messages posted by
 a member without any role! Assign yourself the "MJ" role to get full
 rights with the bot.)

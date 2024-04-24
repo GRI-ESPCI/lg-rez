@@ -270,6 +270,14 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
             log += f"{util.action.joueur.nom} -> {util.cible} / "
             cibles.setdefault(util.cible, [])
             cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes)
+    
+    impri = BaseAction.query.get(config.ajout_vote_impr_baseaction)
+    if impri:
+        log += "\n  - Imprimante(x) : "
+        for util in query.join(Utilisation.action).filter(Action.base == impri).all():
+            log += f"{util.action.joueur.nom} -> {util.cible} / "
+            cibles.setdefault(util.cible, [])
+            cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes_impr)
 
     # Classe utilitaire
     @functools.total_ordering

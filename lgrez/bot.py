@@ -21,7 +21,7 @@ from lgrez.features import gestion_ia, inscription
 
 async def _check_and_prepare_objects(bot: LGBot) -> None:
         
-     if not config.is_setup:
+    if not config.is_setup:
         return
         
     if len(config.guild.channels) < 20:

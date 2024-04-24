@@ -217,8 +217,8 @@ async def wipe(journey: DiscordJourney, quoi: Literal["haros", "candids"]):
     await tools.log(f"/wipe : {len(candid_haros)} {quoi} supprimés")
  
  
- 
-  
+   
+   
 async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
     try:
         vaction = joueur.action_vote(Vote.cond)

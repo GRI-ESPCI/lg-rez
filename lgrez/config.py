@@ -143,9 +143,11 @@ modif_vote_baseaction: str = "modification-vote"
 #: :attr:`.bdd.BaseAction.slug` de l'action de base permettant
 #: d'ajouter un/des vote(s) (rôle du *Corbeau* dans le jeu PCéen).
 ajout_vote_baseaction: str = "ajout-vote"
+ajout_vote__impr_baseaction: str = "dépôt-affiche"
 
 #: Nombre de votes ajoutés par l'action :attr:`ajout_vote_baseaction`.
 n_ajouts_votes: int = 2
+n_ajouts_votes_impr: int = 1
 
 
 #: Nom de la feuille du GSheet *Données brûtes* où enregistrer
