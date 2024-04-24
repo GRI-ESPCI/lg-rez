@@ -72,7 +72,7 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
     )
     await config.Channel.debats.send(
         f"{config.Emoji.ha}{config.Emoji.ro} de {journey.member.mention} sur {joueur.member.mention} ! "
-        f"Vous en pensez quoi vous ? (détails sur {config.Channel.haros.mention})"
+        f"Vous en pensez quoi vous? (détails sur {config.Channel.haros.mention})"
     )
 
     haro = CandidHaro(joueur=joueur, type=CandidHaroType.haro, message_id=haro_message.id)
@@ -216,9 +216,20 @@ async def wipe(journey: DiscordJourney, quoi: Literal["haros", "candids"]):
     await journey.send("Fait.")
     await tools.log(f"/wipe : {len(candid_haros)} {quoi} supprimés")
  
- 
-   
-   
+
+@app_commands.command()
+@tools.mjs_only
+@journey_command
+async def imprimeur(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.VivantTransformer]):
+    """Lance publiquement un haro contre la personne visée par l'imprimeur. (COMMANDE MJ)
+
+    Args:
+        joueur: Le joueur ou la joueuse à accuser de tous les maux.
+
+    Cette commande n'est utilisable que lorsqu'un vote pour le condamné est en cours.
+    """
+    await _imprimeur(journey, joueur=joueur)
+
 async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
     try:
         vaction = joueur.action_vote(Vote.cond)
@@ -231,14 +242,16 @@ async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
         return
 
     (motif,) = await journey.modal(
-        f"Accusation contre {joueur.nom}",
+        f"Haro contre {joueur.nom}",
+        discord.ui.TextInput(label="Quelle est la raison de cette haine ?", style=discord.TextStyle.paragraph),
     )
 
     emb = discord.Embed(
         title=(f"**{config.Emoji.ha}{config.Emoji.ro} contre {joueur.nom} !**"),
+        description=f"**« {motif} »\n**",
         color=0xFF0000,
     )
-    emb.set_author(name=f"L'Imprimeur en a gros 😡😡")
+    emb.set_author(name=f"L'imprimeur en a gros 😡😡")
     emb.set_thumbnail(url=config.Emoji.bucher.url)
 
     await journey.ok_cancel("C'est tout bon ?", embed=emb)
@@ -263,47 +276,13 @@ async def _imprimeur(journey: DiscordJourney, joueur: Joueur):
         f"(Psst, {joueur.member.mention} :3)", embed=emb, view=_HaroView(timeout=None)
     )
     await config.Channel.debats.send(
-        f"{config.Emoji.ha}{config.Emoji.ro} de {journey.member.mention} sur {joueur.member.mention} ! "
-        f"Vous en pensez quoi vous ? (détails sur {config.Channel.haros.mention})"
+        f"{config.Emoji.ha}{config.Emoji.ro} de L'imprimeur sur {joueur.member.mention} ! "
+        f"Vous en pensez quoi vous? (détails sur {config.Channel.haros.mention})"
     )
 
     haro = CandidHaro(joueur=joueur, type=CandidHaroType.haro, message_id=haro_message.id)
-    CandidHaro.add(haro)
-
+    
     if journey.channel != config.Channel.haros:
         await journey.send(f"Allez, c'est parti ! ({config.Channel.haros.mention})")
 
 
-@app_commands.command()
-@tools.mjs_only
-@journey_command
-async def imprimeur(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.VivantTransformer]):
-    """Lance publiquement un haro contre la personne visée par l'imprimeur. (COMMANDE MJ)
-
-    Args:
-        joueur: Le joueur ou la joueuse à accuser de tous les maux.
-
-    Cette commande n'est utilisable que lorsqu'un vote pour le condamné est en cours.
-    """
-    await _imprimeur(journey, joueur=joueur)
-
-
-@app_commands.context_menu(name="Lancer un haro contre ce joueur")
-@tools.mjs_only
-@journey_context_menu
-async def haro_menu(journey: DiscordJourney, member: discord.Member):
-    if member.top_role >= config.Role.mj:
-        await journey.send(":x: Attends deux secondes, tu pensais faire quoi là ?")
-        return
-
-    if member == config.bot.user:
-        await journey.send(":x: Tu ne peux pas haro le bot, enfin !!!")
-        return
-
-    try:
-        joueur = Joueur.from_member(member)
-    except ValueError:
-        await journey.send(":x: Hmm, ce joueur n'a pas l'air inscrit !")
-        return
-
-    await _haro(journey, joueur=joueur)
