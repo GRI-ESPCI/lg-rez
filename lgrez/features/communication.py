@@ -269,15 +269,16 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
         for util in query.join(Utilisation.action).filter(Action.base == corba).all():
             log += f"{util.action.joueur.nom} -> {util.cible} / "
             cibles.setdefault(util.cible, [])
-            cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes)
+#            cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes) #ancienne version 
+            cibles[util.cible].extend(["Corbeau"] * config.n_ajouts_votes) #fix car pb avec imprimeur
     
-    impri = BaseAction.query.get(config.ajout_vote_impr_baseaction)
+    impri = BaseAction.query.get("dépôt-affiche")
     if impri:
         log += "\n  - Imprimante(x) : "
         for util in query.join(Utilisation.action).filter(Action.base == impri).all():
             log += f"{util.action.joueur.nom} -> {util.cible} / "
             cibles.setdefault(util.cible, [])
-            cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes_impr)
+            cibles[util.cible].extend(["Imprimeur"]* 1)
 
     # Classe utilitaire
     @functools.total_ordering
