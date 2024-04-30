@@ -37,6 +37,7 @@ async def roll(journey: DiscordJourney, *, pattern: str):
         - ``/roll vivant``        -> choisit un joueur vivant
     """
     global next_roll
+    moi = Joueur.from_member(journey.member)
 
     inp = pattern.lower()
     # Rolls spéciaux
@@ -58,6 +59,8 @@ async def roll(journey: DiscordJourney, *, pattern: str):
         result = random.choice(["Voyante", "Marionnettiste", "Notaire", "Popo de mort", "Chat-garou", "Espion"])
     elif inp in ["taverne", "tavernier"]:
         result = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
+    elif inp in ["loup", "méchants", "nécro", "necromants", "nécromancien", "nécromanciens", "loups", "meute"]:
+    	result = moi
 
     if result:
         if next_roll is not None:
