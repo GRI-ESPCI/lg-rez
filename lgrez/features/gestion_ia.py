@@ -632,6 +632,9 @@ async def process_ia(message: discord.Message, send_callable: Callable[[str], Co
         message: Message auquel réagir.
         debug: Si ``True``, affiche les erreurs lors de l'évaluation des messages (voir :func:`.tools.eval_accols`).
     """
+    if message.type != discord.MessageType.default:  # Vérifie si le message n'est pas un message système
+        return
+    
     (
         await trigger_at_mj(message, send_callable)  # @MJ (aled)
         or await trigger_gif(message, send_callable)  # Un petit GIF ? (si FALS)
