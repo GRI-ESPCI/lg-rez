@@ -158,6 +158,7 @@ class _FakeMessage:
         self.channel = channel
         self.author = author
         self.content = content
+        self.type = discord.MessageType.default
 
     async def add_reaction(emoji: discord.Emoji | str) -> None:
         pass
@@ -632,10 +633,8 @@ async def process_ia(message: discord.Message, send_callable: Callable[[str], Co
         message: Message auquel réagir.
         debug: Si ``True``, affiche les erreurs lors de l'évaluation des messages (voir :func:`.tools.eval_accols`).
     """
-    if message.type != discord.MessageType.default:  # Vérifie si le message n'est pas un message système
-        return
-    
-    (
+    if message.type == discord.MessageType.default: # Vérifie si le message n'est pas un message système
+    	(
         await trigger_at_mj(message, send_callable)  # @MJ (aled)
         or await trigger_gif(message, send_callable)  # Un petit GIF ? (si FALS)
         or await trigger_roles(message, send_callable)  # Rôles
@@ -646,3 +645,5 @@ async def process_ia(message: discord.Message, send_callable: Callable[[str], Co
         or await trigger_mot_unique(message, send_callable)  # Un seul mot ==> on répète
         or await default(message, send_callable)  # Réponse par défaut
     )
+    elif message.type != discord.MessageType.default : 
+          return
