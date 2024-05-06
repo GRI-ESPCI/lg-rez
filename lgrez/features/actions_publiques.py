@@ -63,6 +63,16 @@ async def _haro(journey: DiscordJourney, joueur: Joueur):
         async def contre_haro(self, contre_haro_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(contre_haro_interaction, ephemeral=True) as contre_haro_journey:
                 await _haro(contre_haro_journey, joueur=moi)
+                
+        @discord.ui.button(label=f"Voter contre {moi.nom}", style=discord.ButtonStyle.danger, emoji=config.Emoji.ha)
+        async def vote2(self, vote2_interaction: discord.Interaction, button: discord.ui.Button):
+            async with DiscordJourney(vote2_interaction, ephemeral=True) as vote2_journey:
+                try:
+                    votant = Joueur.from_member(vote2_journey.member)
+                except ValueError:
+                    await vote_journey.send(":x: Tu n'as pas le droit de vote, toi")
+                    return
+                await do_vote(vote2_journey, Vote.cond, votant=votant, cible=moi)
 
         async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
             raise error
