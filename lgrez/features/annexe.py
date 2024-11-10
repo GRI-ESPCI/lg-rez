@@ -57,7 +57,15 @@ async def roll(journey: DiscordJourney, *, pattern: str):
     elif inp in ["ludo", "ludopathe"]:
         result = random.choice(["Voyante", "Marionnettiste", "Notaire", "Popo de mort", "Chat-garou", "Espion"])
     elif inp in ["taverne", "tavernier"]:
-        result = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
+        role1 = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
+        if role1 == "Rôle random" : 
+               role = random.choice(Role.query.filter_by(actif=True).all())
+               role1 += f" : {role.nom_complet}"
+        role2 = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
+        if role2 == "Rôle random" : 
+               role = random.choice(Role.query.filter_by(actif=True).all())
+               role2 += f" : {role.nom_complet}"
+        result = f"{role1} \n{role2}"
     elif inp in ["loup", "méchants", "nécro", "necromants", "nécromancien", "nécromanciens", "loups", "meute"]:
     	 if "mj" not in journey.member.top_role.name.lower():
     	       moi = Joueur.from_member(journey.member)

@@ -125,6 +125,7 @@ async def menu(journey: DiscordJourney):
         rep += (
             f" - {config.Emoji.bucher}  Vote pour le bûcher en cours – vote actuel : {tools.code(vaction.decision)} "
             f":arrow_forward: Tape `/vote` pour voter\n"
+            f"- {config.Emoji.ha}{config.Emoji.ro} Vote pour le bûcher en cours :arrow_forward: Tape `/haro` pour accuser un autre joueur\n"
         )
 
     vaction = joueur.action_vote(Vote.maire)
@@ -132,6 +133,7 @@ async def menu(journey: DiscordJourney):
         rep += (
             f" - {config.Emoji.maire}  Vote pour le maire en cours – vote actuel : {tools.code(vaction.decision)} "
             f":arrow_forward: Tape `/votemaire` pour voter\n"
+            f"- {config.Emoji.maire}  Vote pour le maire en cours :arrow_forward: Tape `/candid` pour candidater à la mairie\n"
         )
 
     vaction = joueur.action_vote(Vote.loups)

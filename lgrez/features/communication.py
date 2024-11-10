@@ -431,6 +431,251 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
         await journey.channel.send("(actions liées au mot MJ ouvertes)")
 
+@app_commands.command()
+@tools.mjs_only
+@journey_command
+async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depuis: str | None = None):
+    """Trace le résultat intermédiare du vote et ne l'envoie pas (COMMANDE MJ)
+
+    Args:
+        quoi: Vote pour le condamné ou pour l'élection à la Mairie ?
+        depuis: Heure à partir de laquelle compter les votes (si plusieurs votes dans la journée, HHh / HHhMM).
+            Compte tous les votes du jour par défaut.
+            Si plus tard que l'heure actuelle, compte les votes de la veille.
+
+    Trace les votes sous forme d'histogramme à partir du Tableau de bord, en fait un embed
+    en précisant les résultats détaillés et l'envoie sur le chan ``#annonces``.
+
+    Si ``quoi == "cond"``, déclenche aussi les actions liées au mot des MJs (:attr:`.bdd.ActionTrigger.mot_mjs`).
+    """
+    # Différences plot cond / maire
+    if quoi == "cond":
+        vote_enum = Vote.cond
+        haro_candidature = CandidHaroType.haro
+        typo = "bûcher du jour"
+        mort_election = "Mort"
+        pour_contre = "contre"
+        emoji = config.Emoji.bucher
+        couleur = 0x730000
+
+    else:
+        vote_enum = Vote.maire
+        haro_candidature = CandidHaroType.candidature
+        typo = "nouveau maire"
+        mort_election = "Élection"
+        pour_contre = "pour"
+        emoji = config.Emoji.maire
+        couleur = 0xD4AF37
+
+    if depuis:
+        tps = tools.heure_to_time(depuis)
+    else:
+        tps = datetime.time(0, 0)
+
+    ts = datetime.datetime.combine(datetime.date.today(), tps)
+    if ts > datetime.datetime.now():  # hier
+        ts -= datetime.timedelta(days=1)
+
+    log = f"/plot {quoi} (> {ts}) :"
+    query = Utilisation.query.join(Utilisation.action).filter(
+        #Utilisation.etat == UtilEtat.validee, à laisser pour les votes finaux mais test ici
+        Utilisation.ts_decision > ts,
+        Action.active == True,
+    )
+    cibles = {}
+
+    # Get votes
+    utils = query.join(Utilisation.action).filter(Action.vote == vote_enum).all()
+    votes = {util.action.joueur: util.cible for util in utils}
+    votelog = " / ".join(f"{v.nom} -> {c.nom}" for v, c in votes.items())
+    log += f"\n  - Votes : {votelog}"
+
+    for votant, vote in votes.items():
+        cibles.setdefault(vote, [])
+        cibles[vote].append(votant.nom)
+
+    # Get intriguants
+    intba = BaseAction.query.get(config.modif_vote_baseaction)
+    if intba:
+        log += "\n  - Intrigant(s) : "
+        for util in query.join(Utilisation.action).filter(Action.base == intba).all():
+
+            votant = util.ciblage("cible").valeur
+            vote = util.ciblage("vote").valeur
+            log += f"{util.action.joueur.nom} : {votant.nom} -> {vote.nom} / "
+
+            initial_vote = votes.get(votant)
+            if initial_vote:
+                cibles[initial_vote].remove(votant.nom)
+                if not cibles[initial_vote]:  # plus de votes
+                    del cibles[initial_vote]
+            votes[votant] = vote
+            cibles.setdefault(vote, [])
+            cibles[vote].append(votant.nom)
+
+    # Tri des votants
+    for votants in cibles.values():
+        votants.sort()  # ordre alphabétique
+
+    # Get corbeaux, après tri -> à la fin
+    corba = BaseAction.query.get(config.ajout_vote_baseaction)
+    if corba:
+        log += "\n  - Corbeau(x) : "
+        for util in query.join(Utilisation.action).filter(Action.base == corba).all():
+            log += f"{util.action.joueur.nom} -> {util.cible} / "
+            cibles.setdefault(util.cible, [])
+#            cibles[util.cible].extend([util.action.joueur.role.nom] * config.n_ajouts_votes) #ancienne version 
+            cibles[util.cible].extend(["Corbeau"] * config.n_ajouts_votes) #fix car pb avec imprimeur
+    
+    impri = BaseAction.query.get("dépôt-affiche")
+    if impri:
+        log += "\n  - Imprimante(x) : "
+        for util in query.join(Utilisation.action).filter(Action.base == impri).all():
+            log += f"{util.action.joueur.nom} -> {util.cible} / "
+            cibles.setdefault(util.cible, [])
+            cibles[util.cible].extend(["Imprimeur"]* 1)
+
+    # Classe utilitaire
+    @functools.total_ordering
+    class _Cible:
+        """Représente un joueur ciblé, pour usage dans /plot"""
+
+        def __init__(self, joueur, votants):
+            self.joueur = joueur
+            self.votants = votants
+
+        def __repr__(self) -> str:
+            return f"{self.joueur.nom} ({self.votes})"
+
+        def __eq__(self, other):
+            if not isinstance(other, type(self)):
+                return NotImplemented
+            return self.joueur.nom == other.joueur.nom and self.votes == other.votes
+
+        def __lt__(self, other):
+            if not isinstance(other, type(self)):
+                return NotImplemented
+            if self.votes == other.votes:
+                return self.joueur.nom < other.joueur.nom
+            return self.votes < other.votes
+
+        @property
+        def votes(self):
+            return len(self.votants)
+
+        @property
+        def eligible(self):
+            return any(ch.type == haro_candidature for ch in self.joueur.candidharos)
+
+        def couleur(self, choisi) -> str:
+            if self == choisi:
+                return hex(couleur).replace("0x", "#")
+            if self.eligible:
+                return "#64b9e9"
+            else:
+                return "gray"
+
+    # Récupération votes
+    cibles = [_Cible(jr, vts) for (jr, vts) in cibles.items()]
+    cibles.sort(reverse=True)  # par nb de votes, puis ordre alpha
+    log += f"\n  - Cibles : {cibles}"
+
+    # Détermination cible
+    choisi = None
+    eligibles = [cible for cible in cibles if cible.eligible]
+    log += f"\n  - Éligibles : {eligibles}"
+
+    if eligibles:
+        maxvotes = eligibles[0].votes
+        egalites = [cible for cible in eligibles if cible.votes == maxvotes]
+
+        if len(egalites) > 1:  # Égalité
+            choisi = await journey.select(
+                "Égalité entre plusieurs joueurs :" + "\nQui meurt / est élu ? "
+                "(regarder vote du maire, si joueur garde-loupé ou inéligible...)",
+                {cible: cible.joueur.nom for cible in egalites} | {None: "Personne (pas de vote du maire)"},
+            )
+
+        elif await journey.yes_no(
+            f"Joueur éligible le plus voté : {tools.bold(eligibles[0].joueur.nom)}\n"
+            "Ça meurt / est élu ? (pas garde-loupé, inéligible ou autre)"
+        ):
+            choisi = eligibles[0]
+
+    log += f"\n  - Choisi : {choisi or '[aucun]'}"
+    await tools.log(log)
+
+    # Paramètres plot
+    discord_gray = "#2F3136"
+    plt.figure(facecolor=discord_gray)
+    plt.rcParams.update({"font.size": 16})
+    ax = plt.axes(facecolor="#8F9194")  # coloration de TOUT le graphe
+    ax.tick_params(axis="both", colors="white")
+    ax.spines["bottom"].set_color("white")
+    ax.spines["left"].set_color(discord_gray)
+    ax.spines["right"].set_color(discord_gray)
+    ax.spines["top"].set_color(discord_gray)
+    ax.set_facecolor(discord_gray)
+    ax.set_axisbelow(True)
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    # Plot
+    ax.bar(
+        x=range(len(cibles)),
+        height=[cible.votes for cible in cibles],
+        tick_label=[cible.joueur.nom.replace(" ", "\n", 1) for cible in cibles],
+        color=[cible.couleur(choisi) for cible in cibles],
+    )
+    plt.grid(axis="y")
+
+    if not os.path.isdir("figures"):
+        os.mkdir("figures")
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d--%H")
+    image_path = f"figures/hist_{now}_{quoi}.png"
+    plt.savefig(image_path, bbox_inches="tight")
+
+    # --------------- Partie Discord ---------------
+
+    # Détermination rôle et camp
+    emoji_camp = None
+    if choisi:
+        if quoi == "cond":
+            role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
+            nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
+        else:
+            # Maire : ne pas annoncer le rôle
+            nom_et_role = f"{tools.bold(choisi.joueur.nom)}"
+    else:
+        nom_et_role = "personne, bande de tocards"
+
+    # Création embed
+    embed = discord.Embed(
+        title=f"{mort_election} de {nom_et_role}", description=f"{len(votes)} votes au total", color=couleur
+    )
+    embed.set_author(name=f"Résultats du vote pour le {typo}", icon_url=emoji.url)
+
+    if emoji_camp:
+        embed.set_thumbnail(url=emoji_camp.url)
+
+    embed.set_footer(
+        text="\n".join(
+            ("A" if cible.votes == 1 else "Ont")
+            + f" voté {pour_contre} {cible.joueur.nom} : "
+            + ", ".join(cible.votants)
+            for cible in cibles
+        )
+    )
+
+    file = discord.File(image_path, filename="image.png")
+    embed.set_image(url="attachment://image.png")
+
+    await journey.ok_cancel("Ça part ?", file=file, embed=embed)
+
+    # Envoi du graphe
+    file = discord.File(image_path, filename="image.png")
+    # Un objet File ne peut servir qu'une fois, il faut le recréer
+
 
 @app_commands.command()
 @tools.mjs_only
