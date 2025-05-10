@@ -355,7 +355,7 @@ class _CandidHaroTransformerMixin(_TableTransformerMixin):
     NOK_SUFFIX = ""
 
     async def _transform(self, table: type[_Table], value: str) -> _Table:
-        await super()._transform(table, value.removesuffix(self.OK_SUFFIX).removesuffix(self.NOK_SUFFIX))
+        return await super()._transform(table, value.removesuffix(self.OK_SUFFIX).removesuffix(self.NOK_SUFFIX))
 
     async def get_choices(
         self, current: str, candid_haro_type: CandidHaroType, ok_mark: str, nok_mark: str
@@ -384,7 +384,9 @@ class HaroteTransformer(VivantTransformer, _CandidHaroTransformerMixin):
     NOK_SUFFIX = f" ⚠️ pas de haro"
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await super().get_choices(current, CandidHaroType.haro, "")
+        #return await super().get_choices(current, CandidHaroType.haro, "")
+        return await super().get_choices(current, CandidHaroType.haro, self.OK_SUFFIX, self.NOK_SUFFIX)
+
 
 
 class CandidatTransformer(VivantTransformer, _CandidHaroTransformerMixin):
@@ -392,7 +394,9 @@ class CandidatTransformer(VivantTransformer, _CandidHaroTransformerMixin):
     NOK_SUFFIX = f" ⚠️ pas candidat"
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await super().get_choices(current, CandidHaroType.candidature)
+        #return await super().get_choices(current, CandidHaroType.candidature)
+        return await super().get_choices(current, CandidHaroType.haro, self.OK_SUFFIX, self.NOK_SUFFIX)
+
 
 
 class RoleTransformer(app_commands.Transformer, _TableTransformerMixin):

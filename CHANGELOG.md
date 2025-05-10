@@ -8,8 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 to benefit Sphinx internal links to Python objects:*
 https://lg-rez.readthedocs.io/fr/2.2.0/changelog.html
 
+## 4.0.12 - 2025-05-10
 
-## 3.2.0 - 2024-03-19
+  - Fixed : `vote`, `votemaire` and `coinflip` commands
+  - Tied votes interaction
+  - Adding `heure`command to get the time in Paris
+  - Fixes on `coinflip` and `plot_int`
+  - Adding protection to avoid `nextroll` use for manipulation
+
+## 4.0.11 - 2024-04-30
+
+  - Adding `plot_int`action
+  - Changes on Haro and candid plot to add a posibility for the players to vote
+
+## 3.0.9 - 2024-04-30
+
+  - Adding `haroparmj` action
+  - Various bug fixes and QoL improvement for MJ
+
+## 4.0.1 - 2024-03-19
 
   - Adding `imprimeur` action
   - Changed ludopathe pattern

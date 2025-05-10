@@ -329,6 +329,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     choisi = None
     eligibles = [cible for cible in cibles if cible.eligible]
     log += f"\n  - Éligibles : {eligibles}"
+    egalite_true = False
 
     if eligibles:
         maxvotes = eligibles[0].votes
@@ -338,8 +339,9 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
             choisi = await journey.select(
                 "Égalité entre plusieurs joueurs :" + "\nQui meurt / est élu ? "
                 "(regarder vote du maire, si joueur garde-loupé ou inéligible...)",
-                {cible: cible.joueur.nom for cible in egalites} | {None: "Personne (pas de vote du maire)"},
+                {cible.joueur: cible.joueur.nom for cible in egalites} | {None: "Personne (pas de vote du maire)"},
             )
+            egalite_true = True
 
         elif await journey.yes_no(
             f"Joueur éligible le plus voté : {tools.bold(eligibles[0].joueur.nom)}\n"
@@ -384,15 +386,26 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
     # Détermination rôle et camp
     emoji_camp = None
-    if choisi:
-        if quoi == "cond":
-            role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
-            nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
-        else:
-            # Maire : ne pas annoncer le rôle
-            nom_et_role = f"{tools.bold(choisi.joueur.nom)}"
-    else:
-        nom_et_role = "personne, bande de tocards"
+    if not egalite_true : #correction d'une erreur en cas d'égalité en séparant les deux moyens de gestion
+    	if choisi:
+            if quoi == "cond":
+            	role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
+            	nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
+            else:
+            	# Maire : ne pas annoncer le rôle
+            	nom_et_role = f"{tools.bold(choisi.joueur.nom)}"
+    	else:
+            nom_et_role = "personne, bande de tocards"
+    else :
+    	if choisi:
+            if quoi == "cond":
+            	role, emoji_camp = await _chose_role_and_camp(journey, choisi)
+            	nom_et_role = f"{tools.bold(choisi.nom)}, {role}"
+            else:
+            	# Maire : ne pas annoncer le rôle
+            	nom_et_role = f"{tools.bold(choisi.nom)}"
+    	else:
+            nom_et_role = "personne, bande de tocards"    
 
     # Création embed
     embed = discord.Embed(
@@ -444,9 +457,7 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
             Si plus tard que l'heure actuelle, compte les votes de la veille.
 
     Trace les votes sous forme d'histogramme à partir du Tableau de bord, en fait un embed
-    en précisant les résultats détaillés et l'envoie sur le chan ``#annonces``.
-
-    Si ``quoi == "cond"``, déclenche aussi les actions liées au mot des MJs (:attr:`.bdd.ActionTrigger.mot_mjs`).
+    en précisant les résultats détaillés.
     """
     # Différences plot cond / maire
     if quoi == "cond":
@@ -584,6 +595,7 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
     choisi = None
     eligibles = [cible for cible in cibles if cible.eligible]
     log += f"\n  - Éligibles : {eligibles}"
+    egalite_true = False
 
     if eligibles:
         maxvotes = eligibles[0].votes
@@ -593,8 +605,9 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
             choisi = await journey.select(
                 "Égalité entre plusieurs joueurs :" + "\nQui meurt / est élu ? "
                 "(regarder vote du maire, si joueur garde-loupé ou inéligible...)",
-                {cible: cible.joueur.nom for cible in egalites} | {None: "Personne (pas de vote du maire)"},
+                {cible.joueur: cible.joueur.nom for cible in egalites} | {None: "Personne (pas de vote du maire)"},
             )
+            egalite_true = True
 
         elif await journey.yes_no(
             f"Joueur éligible le plus voté : {tools.bold(eligibles[0].joueur.nom)}\n"
@@ -639,15 +652,16 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
 
     # Détermination rôle et camp
     emoji_camp = None
-    if choisi:
-        if quoi == "cond":
-            role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
-            nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
-        else:
-            # Maire : ne pas annoncer le rôle
+    if not egalite_true : #correction d'une erreur en cas d'égalité en séparant les deux moyens de gestion
+    	if choisi:#pas de choix de role on saute cette séquence
             nom_et_role = f"{tools.bold(choisi.joueur.nom)}"
-    else:
-        nom_et_role = "personne, bande de tocards"
+    	else:
+            nom_et_role = "personne, bande de tocards"
+    else :
+    	if choisi:
+            nom_et_role = f"{tools.bold(choisi.nom)}, {role}"
+    	else:
+            nom_et_role = "personne, bande de tocards"   
 
     # Création embed
     embed = discord.Embed(
@@ -670,7 +684,7 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
     file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
 
-    await journey.ok_cancel("Ça part ?", file=file, embed=embed)
+    await journey.send("Ça part ?", file=file, embed=embed)
 
     # Envoi du graphe
     file = discord.File(image_path, filename="image.png")

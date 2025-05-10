@@ -7,6 +7,10 @@ Commandes diverses qu'on ne savait pas où ranger
 import random
 import requests
 import datetime
+from zoneinfo import ZoneInfo
+import locale
+
+
 
 from discord import app_commands
 from akinator.async_aki import Akinator
@@ -20,6 +24,22 @@ from lgrez.bdd import Joueur, Role, Camp
 DESCRIPTION = """Commandes annexes aux usages divers"""
 
 next_roll = None
+
+@app_commands.command()
+@journey_command
+async def heure(journey: DiscordJourney):
+    
+    """Donne l'heure actuelle à Paris (heure du jeu du LG)"""
+    
+    try:
+         locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
+    except locale.Error:
+         pass
+    
+    now = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    heure_str = now.strftime("%H:%M:%S")
+    date_str = now.strftime("%A %d %B %Y").capitalize()
+    await journey.send(f"🕒 Il est {heure_str} à la Rez et à PC, ce {date_str}.")
 
 
 @app_commands.command()
@@ -144,9 +164,14 @@ async def nextroll(journey: DiscordJourney, *, next: str = None):
     next_roll = next
     await journey.send("🤫", ephemeral=True)
 
+    # Envoi un MP avec le nextroll et l'auteur dans les logs
+    await tools.log(
+        f"🔔 La commande `nextroll` a été utilisée par **{journey.member.nick}**.\n"
+        f"Contenu : `{next_roll}`"
+    )
 
-@journey_command
 @app_commands.command()
+@journey_command
 async def coinflip(journey: DiscordJourney):
     """Pile ou face ?
 

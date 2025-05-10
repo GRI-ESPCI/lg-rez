@@ -29,6 +29,7 @@ from lgrez.blocs.journey import DiscordJourney, journey_command
 from lgrez.features import gestion_actions
 
 
+
 async def export_vote(vote: Vote | None, utilisation: Utilisation) -> None:
     """Enregistre un vote/les actions résolues dans le GSheet ad hoc.
 
@@ -460,6 +461,7 @@ async def action_(
     if action.base.instant:
         await gestion_actions.close_action(action)
         await journey.send(tools.ital(f"[Allô {config.Role.mj.mention}, conséquence instantanée ici !]"))
+        await tools.log(tools.ital(f"[Allô {config.Role.mj.mention}, conséquence instantanée {joueur.private_chan.mention} !]"))
 
     else:
         await journey.send(
