@@ -1,6 +1,6 @@
-"""lg-rez / features / Tâches planifiées
+"""lg-rez / features / Votes et actions
 
-Planification, liste, annulation, exécution de tâches planifiées
+Exécution de votes et actions
 
 """
 
@@ -468,3 +468,32 @@ async def action_(
             f"Action « {tools.bold(action.decision)} » bien prise en compte pour {tools.code(action.base.slug)}.\n"
             + tools.ital("Tu peux modifier ta décision autant que nécessaire avant la fin du créneau.")
         )
+
+@app_commands.command()
+@tools.mjs_only
+@journey_command
+async def annulevote(journey: DiscordJourney,*,joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],type_vote: Vote):
+    """Annule le vote d’un joueur (le rend non comptabilisé).
+
+    Args:
+        joueur: Le joueur dont tu veux annuler le vote.
+        type_vote: Le type de vote à annuler (cond, maire, loups).
+    """
+    # Récupère l’action de vote correspondante
+    vaction = joueur.action_vote(type_vote)
+    util = vaction.derniere_utilisation
+
+    if not util or not util.is_filled:
+        await journey.send(f":x: {joueur.nom} n’a pas de vote valide en cours pour {type_vote.name}.")
+        return
+
+    # Met le vote comme ignoré
+    util.etat = UtilEtat.ignoree
+    util.ts_decision = datetime.datetime.now()
+    util.update()
+
+    await journey.send(f"✅ Vote de {tools.bold(joueur.nom)} pour {tools.code(type_vote.name)} annulé (ignoré).")
+
+    #On note dans le GSheet aussi (experimental)
+    await export_vote(type_vote, util)
+

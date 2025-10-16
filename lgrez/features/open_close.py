@@ -234,6 +234,17 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
                 f"Utilisez {tools.code('/haro')} pour en relancer."
             )
         )
+    # Crée des candidatures automatiques pour tous les villagois en cas de vote maire
+    if qui == Vote.maire:
+        candidats = Joueur.query.filter(Joueur.votant_village.is_(True)).all()
+        for joueur in candidats:
+            CandidHaro.add(CandidHaro(joueur=joueur, type=CandidHaroType.candidature))
+        config.session.commit()
+
+        await tools.log(f"/open maire : {len(candidats)} candidatures automatiques créées")
+        await config.Channel.haros.send(
+            f"{len(candidats)} joueurs sont automatiquement candidats à la mairie ! {config.Emoji.maire}"
+        )
 
     # Programme fermeture
     if heure:

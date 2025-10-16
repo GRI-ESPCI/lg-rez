@@ -1,19 +1,18 @@
 # Mise en place d'une nouvelle saison
 
-Protocole détaillé (penser à le mettre à jour) - Loïc Simon, avril 2022 - actualisé par Théo Sabouret et Maïa Douillard mars 2024
+Protocole détaillé (penser à le mettre à jour) - Loïc Simon, avril 2022 - actualisé par Théo Sabouret oct 2025
 
 ## Création du serveur
 
 - Sur Discord, y créer un serveur vierge privé (le + tout en bas de la liste des serveurs)
 - Y ajouter le bot en accédant à l'URL suivante : https://discord.com/oauth2/authorize?client_id=693899568156377181&permissions=8&scope=bot
 - On peut aussi inviter tous les MJs, mais **NE PAS CRÉER DE SALONS OU RÔLES** !
-- Récupérer l'ID du serveur (18 caractères) depuis les paramètres du serveur > Widget > Setup du bot
-
+- Récupérer l'ID du serveur (18 caractères), pour cela activer le mode développeur (Paramètre du compte, Pramètres de l'appli, Avancés) puis clique-droit, Copier l'identifiant du serveur (non disponible si le mode développeur de discord n'est pas activé)
 ## Setup du bot
 
 Pour la suite, on suppose que le bot tourne sur la Griway : sinon, adaptez, vous devriez savoir faire.
 
-- Se connecter à la Griway et `sudo su lgrez`
+- Se connecter à la Griway et `sudo su lgrez` (dans les faits, les seules actions qui nécessitent lgrez sont celles de la bdd, les sudo et modifications des fichiers peuvent être fait depuis griuser sans soucis)
 - Dans `/home/lgrez`, copier le dossier de la dernière saison (`cp -r P22 H23` par ex.)
 - Dans le nouveau dossier, modifier le fichier `.env` (fichier caché ne pas s'inquiéter  pour check faire `ls -a`) pour mettre à jour la variable `LGREZ_SERVER_ID`
   avec l'ID du serveur récupéré précédemment
@@ -25,7 +24,7 @@ Le bot devrait alors changer de serveur et devrait alors poster un message dans 
 (si non, investiguer)
 
 - Tant qu'on est là, modifier le fichier `start_bot.py` avec notamment à la toute fin la date de début de saison
-  et la chambre MJ (peut être fait ultérieurement) (accessoirement on peut créer ici des rôles de plus si besoin)
+  et la chambre MJ (peut être fait ultérieurement) (accessoirement on peut créer ici des rôles de plus si besoin et gérer les réactions automatiques au messages)
 - Mettre à jour le bot, le cas échéant : `../env/bin/pip install --upgrade lg-rez`
 
 ## Setup de la BDD
@@ -41,6 +40,8 @@ Le bot devrait alors changer de serveur et devrait alors poster un message dans 
 
 ## Setup du serveur
 
+- Bien vérifier les nouveau emojis (s'ils sont trop lourds (> 156 Mo je crois) cela fait planter le /setup et cause des soucis)
+- Supprimer les chan par défaut et renommer le chan textuel par un nom générique non utilisé dans le serveur (par exemple 'test')
 - Tu sais lire non ? Le bot il a dit de faire `/setup`, ben voilà
 - Clean les 2-3 salons éventuellement restant et vérifier rapidement que tout à l'air OK (`/ping`)
 - Faire un `/panik` et vérifier que le bot reboot bien en quelques secondes, et qu'il est content

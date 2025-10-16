@@ -140,7 +140,7 @@ async def candid(journey: DiscordJourney):
     """
     joueur = Joueur.from_member(journey.member)
     try:
-        vaction = joueur.action_vote(Vote.cond)
+        vaction = joueur.action_vote(Vote.maire)
     except RuntimeError:
         await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !")
         return
@@ -149,7 +149,9 @@ async def candid(journey: DiscordJourney):
         await journey.send(":x: Pas de vote pour le nouveau maire en cours !")
         return
 
-    if CandidHaro.query.filter_by(joueur=joueur, type=CandidHaroType.candidature).first():
+    candid = CandidHaro.query.filter_by(joueur=joueur, type=CandidHaroType.candidature).first()
+
+    if candid and candid.message_id:
         await journey.send(":x: Hola collègue, tout doux, tu t'es déjà présenté(e) !")
         return
 
@@ -192,8 +194,12 @@ async def candid(journey: DiscordJourney):
     )
     await journey.send(f"Allez, c'est parti ! ({config.Channel.haros.mention})")
 
-    ch = CandidHaro(joueur=joueur, type=CandidHaroType.candidature, message_id=candid_message.id)
-    CandidHaro.add(ch)
+    # Met à jour ou crée la candidature
+    if candid:
+        candid.message_id = candid_message.id
+    else:
+        candid = CandidHaro(joueur=joueur, type=CandidHaroType.candidature, message_id=candid_message.id)
+        CandidHaro.add(candid)
 
 
 @app_commands.command()
