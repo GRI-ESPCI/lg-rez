@@ -24,6 +24,7 @@ from lgrez.bdd import (
     UtilEtat,
     CibleType,
     Vote,
+    BaseAction,
 )
 from lgrez.blocs.journey import DiscordJourney, journey_command
 from lgrez.features import gestion_actions
@@ -252,6 +253,7 @@ async def voteloups(journey: DiscordJourney, *, joueur: app_commands.Transform[J
 
 class ActionTransformer(app_commands.Transformer):
     async def transform(self, interaction: discord.Interaction, value: str) -> Action:
+        print(value)
         return Action.query.get(int(value))
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -476,14 +478,19 @@ async def annulevote(journey: DiscordJourney,*,joueur: app_commands.Transform[Jo
     """Annule le vote d’un joueur (le rend non comptabilisé).
 
     Args:
-        joueur: Le joueur dont tu veux annuler le vote.
+        joueur: Le joueur dont le MJ veut annuler le vote.
         type_vote: Le type de vote à annuler (cond, maire, loups).
     """
     # Récupère l’action de vote correspondante
-    vaction = joueur.action_vote(type_vote)
+    vaction = (Action.query.filter_by(joueur=joueur, vote=type_vote).join(Action.utilisations).order_by(Utilisation.ts_close.desc()).first())
+    if not vaction:
+        await journey.send(f":x: Aucun vote trouvé pour {joueur.nom} ({type_vote.name}).")
+        return
+        
     util = vaction.derniere_utilisation
-
-    if not util or not util.is_filled:
+    await journey.send(util.is_filled)
+    
+    if not util or not (util.is_filled or util.etat == UtilEtat.ignoree):
         await journey.send(f":x: {joueur.nom} n’a pas de vote valide en cours pour {type_vote.name}.")
         return
 
@@ -497,3 +504,20 @@ async def annulevote(journey: DiscordJourney,*,joueur: app_commands.Transform[Jo
     #On note dans le GSheet aussi (experimental)
     await export_vote(type_vote, util)
 
+@app_commands.command()
+@tools.mjs_only
+@journey_command
+async def add_all_actions(journey: DiscordJourney):
+    base_slug= (await journey.modal(
+            f"Nouvelle action pour tous les joueurs",
+            discord.ui.TextInput(label="Slug de la baseaction (cf Gsheet R&A)"),
+    ))[0]
+    if not (base := BaseAction.query.filter_by(slug=base_slug).one_or_none()):
+        await journey.send(f"Action `{base_slug}` invalide, vérifier dans le Gsheet Rôles et actions")
+        return
+    cooldown = 0
+    charges = 1
+    for joueur in Joueur.query.all(): 
+        action = gestion_actions.add_action(joueur=joueur, base=base, cooldown=cooldown, charges=charges)
+        await journey.send(f"Action ajoutée (id {action.id}).")
+    return

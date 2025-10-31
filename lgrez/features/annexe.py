@@ -13,12 +13,13 @@ import locale
 
 
 from discord import app_commands
-from akinator.async_aki import Akinator
+from akinator import Akinator
 
 from lgrez import config, commons
 from lgrez.blocs import tools
 from lgrez.blocs.journey import DiscordJourney, journey_command
 from lgrez.bdd import Joueur, Role, Camp
+from lgrez.features import gestion_ia
 
 
 DESCRIPTION = """Commandes annexes aux usages divers"""
@@ -278,3 +279,34 @@ async def xkcd(journey: DiscordJourney, num: int):
 
     await journey.send(url)
     
+@app_commands.command()
+@journey_command
+async def tupreferes(journey:DiscordJourney):
+    "Tu préfères avec les roles du lg"
+    roles = Role.query.filter_by(actif=True).all()
+    random.shuffle(roles)
+    Flag = False
+    Pref = False
+    fav = roles[0]
+    i=1
+    while not(Flag or Pref):
+        emoji1 = fav.camp.discord_emoji_or_none
+        emoji2 = roles[i].camp.discord_emoji_or_none
+        if await journey.yes_no(f"Tu prefères : {emoji1}  {fav.nom_complet} à {emoji2} {roles[i].nom_complet} ?"):
+    	    if await journey.yes_no(f"Est-ce ton rôle préféré ?"):
+    	        await journey.send(f"Yay\nTon rôle préféré est : {fav.nom_complet} {emoji1}")
+    	        trigger = str(fav.nom_complet)
+    	        await gestion_ia.process_ia(gestion_ia._FakeMessage(journey.channel, journey.member, trigger),journey.send)
+    	        Pref = True
+    	        return
+    	    else : 
+    	    	await journey.send(f"On continue alors !")
+    	    	i+=1
+        else : 
+    	    fav = roles[i]
+    	    i+=1
+        if i==len(roles) : 
+                await journey.send(f"Tu as parcouru tous les roles, ton rôle préféré est donc : {fav.nom_complet} {emoji2}")
+                Flag = True
+                return
+    return

@@ -76,5 +76,5 @@ ici seul __init__.py sera globalement modifié (sauf si on veut vraiment modifie
 ## Mise à jour github et du bot : 
 	- avant de commit et push, vérifier que la version dans __init__.py du dossier lgrez est bien la bonne (incrémmentée ou non au besoin)
 	- créer un nouvelle Release sur Github avec le numéro de version correspondant le cas échéant
-	- se connecter à la griway puis faire 'source env/bin/activate' dans '/home/lgrez' (à vérifier pour si l'user doit etre lgrez ou griuser)
-	- puis 'pip install git+https://github.com/GRI-ESPCI/lg-rez@master'
+	- se connecter à la griway puis faire `source env/bin/activate` dans `/home/lgrez` (après avoir `sudo supervisorctl stop lgrez` et `sudo su lgrez`)
+	- puis `pip install git+https://github.com/GRI-ESPCI/lg-rez@master`

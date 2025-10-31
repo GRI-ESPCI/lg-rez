@@ -492,6 +492,7 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
         #Utilisation.etat == UtilEtat.validee, à laisser pour les votes finaux mais test ici
         Utilisation.ts_decision > ts,
         Action.active == True,
+        Utilisation.etat != UtilEtat.ignoree,  # exclut votes annulés
     )
     cibles = {}
 

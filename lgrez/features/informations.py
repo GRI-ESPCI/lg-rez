@@ -346,6 +346,13 @@ async def vivants(journey: DiscordJourney):
 
     await journey.send(mess, code=True, prefix=f"Les {len(joueurs)} joueurs vivants sont :")
 
+@app_commands.command()
+@tools.mjs_only
+@journey_command
+async def vivants_nombre(journey: DiscordJourney):
+    """Affiche le nombre de joueurs vivants"""
+    joueurs = Joueur.query.filter(Joueur.est_vivant).all()
+    await journey.send(f"Il y a {len(joueurs)} joueurs vivants.")
 
 @app_commands.command()
 @journey_command
@@ -363,4 +370,4 @@ async def morts(journey: DiscordJourney):
     else:
         mess = "Toi (mais tu ne le sais pas encore)"
 
-    await journey.send(mess, code=True, prefix=f"Les {len(joueurs) or ''} morts sont :")
+    await journey.send("Les {len(joueurs) or ''} morts sont :")

@@ -490,7 +490,7 @@ async def trigger_reactions(
             else:  # Sinon, texte / média
                 # On remplace tous les "{expr}" par leur évaluation
                 rep = tools.eval_accols(rep, locals_=locals(), debug=debug)
-                await send_callable(rep)
+                await send_callable(rep, allowed_mentions=discord.AllowedMentions.none())
 
         return True
 
@@ -587,7 +587,7 @@ async def trigger_mot_unique(message: discord.Message, send_callable: Callable[[
     if len(message.content.split()) == 1 and ":" not in message.content:
         # : pour ne pas trigger aux liens
         rep = f"{message.content.capitalize()} ?"
-        await send_callable(rep)
+        await send_callable(rep, allowed_mentions=discord.AllowedMentions.none())
         return True
 
     return False
@@ -604,7 +604,7 @@ async def trigger_a_ou_b(message: discord.Message, send_callable: Callable[[str]
     """
     if motif := re.fullmatch(r"(.+)\s+ou\s+(.+?)", message.content):
         rep = f"{motif.group(2).rstrip(' !?.,;')}.".capitalize()
-        await send_callable(rep)
+        await send_callable(rep, allowed_mentions=discord.AllowedMentions.none())
         return True
 
     return False
