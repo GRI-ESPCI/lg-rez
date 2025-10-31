@@ -436,7 +436,23 @@ async def action_(
         await journey.send("L'action a fermé entre temps, pas de chance !")
         return
 
-    # Avertissement si action a conséquence instantanée (barbier...)
+    # Avertissement [program:lgrez]
+command=/home/lgrez/env/bin/python /home/lgrez/H25/start_bot.py
+directory=/home/lgrez/H25
+user=lgrez
+
+autostart=true
+autorestart=true
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+
+startretries=20
+numprocs=1
+stdout_logfile=/home/lgrez/H25/H25.log
+redirect_stderr=true
+si action a conséquence instantanée (barbier...)
     if action.base.instant:
         await journey.ok_cancel(
             "Attention : cette action a une conséquence instantanée ! "
