@@ -370,4 +370,4 @@ async def morts(journey: DiscordJourney):
     else:
         mess = "Toi (mais tu ne le sais pas encore)"
 
-    await journey.send("Les {len(joueurs) or ''} morts sont :")
+    await journey.send(await journey.send(mess, code=True, prefix=f"Les {len(joueurs) or ''} morts sont :")

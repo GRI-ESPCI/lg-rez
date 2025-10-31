@@ -253,7 +253,6 @@ async def voteloups(journey: DiscordJourney, *, joueur: app_commands.Transform[J
 
 class ActionTransformer(app_commands.Transformer):
     async def transform(self, interaction: discord.Interaction, value: str) -> Action:
-        print(value)
         return Action.query.get(int(value))
 
     async def autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
