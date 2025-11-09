@@ -487,7 +487,6 @@ async def annulevote(journey: DiscordJourney,*,joueur: app_commands.Transform[Jo
         return
         
     util = vaction.derniere_utilisation
-    await journey.send(util.is_filled)
     
     if not util or not (util.is_filled or util.etat == UtilEtat.ignoree):
         await journey.send(f":x: {joueur.nom} n’a pas de vote valide en cours pour {type_vote.name}.")
