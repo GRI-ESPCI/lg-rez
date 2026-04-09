@@ -31,6 +31,7 @@ from lgrez.features import gestion_actions
 
 
 
+
 async def export_vote(vote: Vote | None, utilisation: Utilisation) -> None:
     """Enregistre un vote/les actions résolues dans le GSheet ad hoc.
 
@@ -118,6 +119,65 @@ async def check_last_utilisation(
 
 
 DESCRIPTION = """Commandes de vote et d'action de rôle"""
+
+async def do_vote_random(journey:DiscordJourney, vote: Vote, votant: Joueur):
+    cible = Joueur.query.get(-1)
+    if not cible:
+        await journey.send(":x: Joueur fictif 'Aléatoire' introuvable, contacter un MJ.")
+        await tools.log(tools.ital(f"[Allô {config.Role.mj.mention}, :x: Joueur fictif 'Aléatoire' introuvable !]"))
+        
+        return
+    match vote:
+        case Vote.cond:
+            vote_name = "le condamné du jour"
+            pour_contre = "contre"
+            can_vote = votant.votant_village
+        case Vote.maire:
+            vote_name = "le nouveau maire"
+            pour_contre = "pour"
+            can_vote = votant.votant_village
+        case Vote.loups:
+            vote_name = "la victime du soir"
+            pour_contre = "contre"
+            can_vote = votant.votant_loups
+
+    try:
+        vaction = votant.action_vote(vote)
+    except RuntimeError:
+        await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !")
+        return
+
+    if not can_vote:
+        await journey.send(":x: Tu n'as pas le droit de participer à ce vote.")
+        return
+    if not vaction.is_open:
+        await journey.send(f":x: Pas de vote pour {vote_name} en cours !")
+        return
+        
+    util = vaction.derniere_utilisation
+    
+    if not vaction.is_open:
+    # On revérifie, si ça a fermé entre temps !!
+        await journey.send(f":x: Le vote pour {vote_name} a fermé entre temps, pas de chance !")
+        return
+        
+    # Modification en base
+    if util.ciblages:  # ancien ciblage
+        Ciblage.delete(*util.ciblages)
+    Ciblage(utilisation=util, joueur=cible).add()
+    util.ts_decision = datetime.datetime.now()
+    util.etat = UtilEtat.remplie
+    util.update()
+
+    # Écriture dans sheet Données brutes
+    await export_vote(vote, util)
+
+    confirm = f"Vote {pour_contre} {tools.bold(cible.nom)} bien pris en compte."
+    [message] = await journey.send(
+        f"{confirm}\n" + tools.ital("Tu peux modifier ton vote autant que nécessaire avant sa fermeture.")
+    )
+    if message.channel != votant.private_chan:
+        await votant.private_chan.send(confirm)
 
 
 async def do_vote(journey: DiscordJourney, vote: Vote, votant: Joueur, cible: Joueur):
@@ -462,7 +522,12 @@ async def action_(
     if action.base.instant:
         await gestion_actions.close_action(action)
         await journey.send(tools.ital(f"[Allô {config.Role.mj.mention}, conséquence instantanée ici !]"))
-        await tools.log(tools.ital(f"[Allô {config.Role.mj.mention}, conséquence instantanée {joueur.private_chan.mention} !]"))
+        await tools.log(
+        f"[Allô {config.Role.mj.mention}, conséquence instantanée dans {joueur.private_chan.mention} !]\n"
+        f"Joueur : {tools.bold(joueur.nom)} | Action : {tools.code(action.base.slug)}\n"
+        f"Décision : {tools.bold(action.decision)}\n"
+        f"Vérifier dans le TDB pour chagar ou tout autre blocage eventuel !"
+    )
 
     else:
         await journey.send(
@@ -473,34 +538,34 @@ async def action_(
 @app_commands.command()
 @tools.mjs_only
 @journey_command
-async def annulevote(journey: DiscordJourney,*,joueur: app_commands.Transform[Joueur, tools.JoueurTransformer],type_vote: Vote):
-    """Annule le vote d’un joueur (le rend non comptabilisé).
-
-    Args:
-        joueur: Le joueur dont le MJ veut annuler le vote.
-        type_vote: Le type de vote à annuler (cond, maire, loups).
-    """
-    # Récupère l’action de vote correspondante
-    vaction = (Action.query.filter_by(joueur=joueur, vote=type_vote).join(Action.utilisations).order_by(Utilisation.ts_close.desc()).first())
-    if not vaction:
-        await journey.send(f":x: Aucun vote trouvé pour {joueur.nom} ({type_vote.name}).")
-        return
-        
-    util = vaction.derniere_utilisation
+async def annulevote(journey: DiscordJourney, *, joueur: app_commands.Transform[Joueur, tools.JoueurTransformer], type_vote: Vote):
+    """Annule le vote d'un joueur (le rend non comptabilisé)."""
     
-    if not util or not (util.is_filled or util.etat == UtilEtat.ignoree):
-        await journey.send(f":x: {joueur.nom} n’a pas de vote valide en cours pour {type_vote.name}.")
+    try:
+        vaction = joueur.action_vote(type_vote)
+    except RuntimeError:
+        await journey.send(":x: Minute papillon, le jeu n'est pas encore lancé !")
         return
 
-    # Met le vote comme ignoré
+    util = vaction.derniere_utilisation
+    await tools.log(f"{util}")
+
+    if not util or util.etat in {UtilEtat.validee, UtilEtat.ignoree, UtilEtat.contree} and not util.is_open:
+        await journey.send(f":x: {joueur.nom} n'a pas de vote actif pour {type_vote.name}.")
+        return
+
+    # Confirmation
+    etat_actuel = util.decision if util.is_filled else "*non défini*"
+    await journey.ok_cancel(
+        f"Annuler le vote de {tools.bold(joueur.nom)} pour {tools.code(type_vote.name)} ?\n"
+        f"Vote actuel : {etat_actuel}"
+    )
+
     util.etat = UtilEtat.ignoree
     util.ts_decision = datetime.datetime.now()
     util.update()
 
-    await journey.send(f"✅ Vote de {tools.bold(joueur.nom)} pour {tools.code(type_vote.name)} annulé (ignoré).")
-
-    #On note dans le GSheet aussi (experimental)
-    await export_vote(type_vote, util)
+    await journey.send(f"✅ Vote de {tools.bold(joueur.nom)} pour {tools.code(type_vote.name)} annulé.")
 
 @app_commands.command()
 @tools.mjs_only

@@ -390,6 +390,8 @@ async def get_sync() -> list[TDBModif]:
 
     for id, joueur in list(joueurs_BDD.items()):
         if id not in ids_TDB:
+            if id == -1: #Joueur fictif, ne pas supprimer
+                continue
             # Joueur en base supprimé du TDB
             del joueurs_BDD[id]
             joueur.delete()

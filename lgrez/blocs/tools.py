@@ -315,7 +315,10 @@ class _TableTransformerMixin:
             app_commands.Choice(name=elem.nom, value=elem.nom) for elem in self.get_elems(table, current, filtre=filtre)
         ][:25]
 
-    def get_elems(self, table: type[_Table], current: str, filtre=None) -> typing.Iterator[_Table]:
+    def get_elems(self, table, current, filtre=None):
+        base_filtre = table.discord_id != -1 if hasattr(table, 'discord_id') else None
+        if base_filtre is not None:
+            filtre = base_filtre if filtre is None else (filtre & base_filtre)
         for elem, _ in table.find_nearest(current, table.nom, sensi=0.25 if len(current) > 2 else 0, filtre=filtre):
             yield elem
 

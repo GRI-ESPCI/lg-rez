@@ -21,8 +21,9 @@ DESCRIPTION = """Commandes de planification, exécution, annulation de tâches""
 
 class TimestampTransformer(app_commands.Transformer):
     FAST_CHOICES = {
-        "Demain 7h": "7:01",
-        "Demain 9h": "9:01",
+        "Demain 7h": "7:05",
+        "Demain 9h": "9:05",
+        "Demain 10h": "10:05",
     }
 
     async def transform(self, interaction: discord.Interaction, value: str) -> datetime.datetime:

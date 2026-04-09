@@ -53,7 +53,7 @@ debut_saison: str = "32 plopembre"
 #: Si ``False``, le processus d'inscription ne demandera pas la
 #: chambre des joueurs, qui seront tous inscrits en :attr:`chambre_mj`
 #: (et la chambre ne sera pas indiquée dans ``/vivants``).
-demande_chambre: bool = True
+demande_chambre: bool = False
 
 #: Nom par défaut de la :attr:`~.bdd.Joueur.chambre` des joueurs.
 chambre_mj: str = "[chambre MJ]"
@@ -149,6 +149,9 @@ ajout_vote__impr_baseaction: str = "dépôt-affiche"
 n_ajouts_votes: int = 2
 n_ajouts_votes_impr: int = 1
 
+#: bool: Indique si les votes seront anonymes ou non durant la partie/pour un moment donné
+#: Relatif a un changement de règles en P26
+is_vote_anonymous = True
 
 #: Nom de la feuille du GSheet *Données brûtes* où enregistrer
 #: les votes brutes pour le condamné du jour.

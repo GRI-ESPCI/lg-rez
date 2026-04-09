@@ -9,6 +9,7 @@ import enum
 from typing import Literal
 
 from discord import app_commands
+import discord
 
 from lgrez import commons, config
 from lgrez.blocs import tools
@@ -24,8 +25,13 @@ from lgrez.bdd import (
     CandidHaroType,
     ActionTrigger,
     Vote,
+    Role,
+    Camp,
+    Statut,
 )
 from lgrez.features.taches import planif_command
+from lgrez.features.voter_agir import do_vote_random
+from lgrez.bdd.enums import Statut
 
 
 async def _get_joueurs(quoi: Literal["open", "close", "remind"], qui: Vote) -> list[Joueur]:
@@ -234,6 +240,8 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
                 f"Utilisez {tools.code('/haro')} pour en relancer."
             )
         )
+        
+        
     # Crée des candidatures automatiques pour tous les villagois en cas de vote maire
     if qui == Vote.maire:
         candidats = Joueur.query.filter(Joueur.votant_village.is_(True)).all()
@@ -254,7 +262,26 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
             await planif_command(ts, close_vote, qui=qui, heure=heure_chain, heure_chain=heure)
         else:
             await planif_command(ts, close_vote, qui=qui)
+            
+    class _RandomView(discord.ui.View):
+        @discord.ui.button(
+            label=f"Voter random"[:80], style=discord.ButtonStyle.primary, emoji=config.Emoji.bucher
+        )
+        async def vote(self, vote_interaction: discord.Interaction, button: discord.ui.Button):
+            async with DiscordJourney(vote_interaction, ephemeral=True) as vote_journey:
+                try:
+                    votant = Joueur.from_member(vote_journey.member)
+                except ValueError:
+                    await vote_journey.send(":x: Tu n'as pas le droit de vote, toi")
+                    return
+                await do_vote_random(vote_journey, Vote.cond, votant=votant)
 
+        async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
+            raise error
+
+    random_message = await config.Channel.haros.send(
+        f"Vote random (sera désigné a 18h15 en cas de majorité)", view=_RandomView(timeout=None)
+    )
 
 @open.command(name="actions")
 @tools.mjs_only
@@ -634,7 +661,9 @@ async def cparti(journey: DiscordJourney):
         "Remplir les paramètres : `Backupfeuille`, `Head`, `Déclencheur horaire`, `Quotidien`, `Entre 1h et 2h` "
         "(pas plus tard car les votes du jour changent à 3h)."
     )
-
+    
+    config.bot.tree.disable_command("allie")
+    await config.bot.tree.sync(guild=config.guild)
     rep = "C'est parti !\n"
 
     n10 = tools.next_occurrence(datetime.time(hour=10))
@@ -681,6 +710,22 @@ async def cparti(journey: DiscordJourney):
     Action.query.filter_by(base=None).delete()
     Action.add(*(Action(joueur=joueur, vote=vote) for joueur in Joueur.query.all() for vote in Vote))
     Action.query
+    
+    # Création du joueur fictif "Aléatoire" si pas déjà présent
+    if not Joueur.query.get(-1):
+        joueur_aleatoire = Joueur(
+            discord_id=-1,
+            chan_id_=-1,
+            nom="Aléatoire",
+            chambre=None,
+            statut=Statut.mort,
+            role=Role.default(),
+            camp=Camp.default(),
+            votant_village=False,
+            votant_loups=False,
+            role_actif=False,
+        )
+        joueur_aleatoire.add()
 
     await journey.send(f"C'est tout bon ! (détails dans {config.Channel.logs.mention})")
 

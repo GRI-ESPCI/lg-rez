@@ -279,7 +279,7 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
     await chan.send(
         "Juste quelques dernières choses :\n "
         "- Plein de commandes te sont d'ores et déjà accessibles ! "
-        f"Découvre les toutes en tapant `/` dans la zone d'envoi de messages ;\n"
+        f"Découvre les toutes en tapant {tools.code('/')} dans la zone d'envoi de messages ;\n"
         f"- Si tu as besoin d'aide, mentionne simplement les MJs ({tools.code('@' + config.Role.mj.name)}) "
         "et on viendra voir ce qui se passe !\n "
         "- Si ce n'est pas le cas, je te conseille fortement d'installer Discord sur ton téléphone, et "
@@ -287,6 +287,8 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
         'Pour le reste du serveur, tu peux le mettre en "mentions only",'
         f"en activant le {tools.code('@everyone')} – il est limité ;\n\n"
         "Enfin, n'hésite pas à me parler, j'ai toujours quelques réponses en stock..."
+        f"- En raison du changement de règle sur le nécromancien ({tools.code('/roles nécromancien')}) il te faudra déclarer un allié potentiel,"
+        "pour cela tu as la commande {tools.code('/allie')}, n'hésite pas si tu as des questions."
     )
 
     await tools.sleep(chan, 5)

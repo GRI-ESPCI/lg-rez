@@ -416,15 +416,17 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
     if emoji_camp:
         embed.set_thumbnail(url=emoji_camp.url)
-
-    embed.set_footer(
-        text="\n".join(
-            ("A" if cible.votes == 1 else "Ont")
-            + f" voté {pour_contre} {cible.joueur.nom} : "
-            + ", ".join(cible.votants)
-            for cible in cibles
-        )
+    
+    if not config.is_vote_anonymous :
+        embed.set_footer(
+            text="\n".join(
+                ("A" if cible.votes == 1 else "Ont")
+                + f" voté {pour_contre} {cible.joueur.nom} : "
+                + ", ".join(cible.votants)
+                for cible in cibles
+            )
     )
+    await tools.log(f"\n".join(("A" if cible.votes == 1 else "Ont")+ f" voté {pour_contre} {cible.joueur.nom} : "+ ", ".join(cible.votants)for cible in cibles))
 
     file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
@@ -675,19 +677,23 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
     if emoji_camp:
         embed.set_thumbnail(url=emoji_camp.url)
 
-    embed.set_footer(
-        text="\n".join(
-            ("A" if cible.votes == 1 else "Ont")
-            + f" voté {pour_contre} {cible.joueur.nom} : "
-            + ", ".join(cible.votants)
-            for cible in cibles
-        )
+    if not config.is_vote_anonymous :
+        embed.set_footer(
+            text="\n".join(
+                ("A" if cible.votes == 1 else "Ont")
+                + f" voté {pour_contre} {cible.joueur.nom} : "
+                + ", ".join(cible.votants)
+                for cible in cibles
+            )
+            
     )
+    await tools.log(f"\n".join(("A" if cible.votes == 1 else "Ont")+ f" voté {pour_contre} {cible.joueur.nom} : "+ ", ".join(cible.votants)for cible in cibles))
 
     file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
 
     await journey.send("Ça part ?", file=file, embed=embed)
+
 
     # Envoi du graphe
     file = discord.File(image_path, filename="image.png")

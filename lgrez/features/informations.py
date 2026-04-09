@@ -333,7 +333,7 @@ async def vivants(journey: DiscordJourney):
 
     Aussi dite : « liste des joueurs qui seront bientôt morts »
     """
-    joueurs = Joueur.query.filter(Joueur.est_vivant).order_by(Joueur.nom).all()
+    joueurs = Joueur.query.filter(Joueur.est_vivant, Joueur.discord_id != -1).order_by(Joueur.nom).all()
 
     mess = " Joueur                     en chambre\n"
     mess += "––––––––––––––––––––––––––––––––––––––––––––––\n"
@@ -351,7 +351,7 @@ async def vivants(journey: DiscordJourney):
 @journey_command
 async def vivants_nombre(journey: DiscordJourney):
     """Affiche le nombre de joueurs vivants"""
-    joueurs = Joueur.query.filter(Joueur.est_vivant).all()
+    joueurs = Joueur.query.filter(Joueur.est_vivant, Joueur.discord_id != -1).all()
     await journey.send(f"Il y a {len(joueurs)} joueurs vivants.")
 
 @app_commands.command()
@@ -361,7 +361,7 @@ async def morts(journey: DiscordJourney):
 
     Aussi dite : « liste des joueurs qui mangent leurs morts »
     """
-    joueurs = Joueur.query.filter(Joueur.est_mort).order_by(Joueur.nom).all()
+    joueurs = Joueur.query.filter(Joueur.est_mort, Joueur.discord_id != -1).order_by(Joueur.nom).all()
 
     if joueurs:
         mess = ""

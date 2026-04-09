@@ -16,6 +16,7 @@ import discord
 from discord import app_commands
 
 from lgrez import __version__, config, features, blocs, bdd, commands, commons
+from lgrez.features import necromancien
 from lgrez.blocs import gsheets, tools, realshell
 from lgrez.bdd import *  # toutes les tables dans globals()
 from lgrez.blocs.journey import DiscordJourney, journey_command
@@ -337,6 +338,12 @@ async def setup(journey: DiscordJourney):
     await journey.send(f"Fin de la configuration !")
 
     config.is_setup = True
+    
+    necromancien.reset_allies()
+    await tools.log("Fichier des alliés Nécromanciens remis à zéro.")
+    
+    config.bot.tree.enable_command("allie")
+    await config.bot.tree.sync(guild=config.guild)
 
     # Delete current chan (will also trigger on_ready)
     await journey.yes_no("Terminé ! Ce salon va être détruit (ce n'est pas une question).")

@@ -219,13 +219,8 @@ async def ping(journey: DiscordJourney):
 async def akinator(journey: DiscordJourney):
     """J'ai glissé chef
 
-    Implémentation directe de https://pypi.org/project/akinator.py
+    Implémentation directe de https://pypi.org/project/akinator
     """
-    # Un jour mettre ça dans des embeds avec les https://fr.akinator.com/
-    # bundles/elokencesite/images/akitudes_670x1096/<akitude>.png croppées,
-    # <akitude> in ["defi", "serein", "inspiration_legere",
-    # "inspiration_forte", "confiant", "mobile", "leger_decouragement",
-    # "vrai_decouragement", "deception", "triomphe"]
     await journey.send(
         "Vous avez demandé à être mis en relation avec "
         + tools.ital("Akinator : Le Génie du web")
@@ -234,24 +229,24 @@ async def akinator(journey: DiscordJourney):
 
     chan = journey.channel
     async with chan.typing():
-        # Connexion
-        aki = Akinator()
-        question = await aki.start_game(language="fr")
+        aki = akinator.Akinator()
+        await aki.start_game(language="fr")
 
     while aki.progression <= 80:
         reponse = await journey.buttons(
-            f"({aki.step + 1}) {question}", {"yes": "👍", "idk": "🤷", "no": "👎", "stop": "⏭️"}
+            f"({aki.step + 1}) {aki.question}",
+            {"yes": "👍", "idk": "🤷", "no": "👎", "stop": "⏭️"}
         )
         if reponse == "stop":
             break
-        question = await aki.answer(reponse)
+        await aki.answer(reponse)
 
     await aki.win()
 
     if await journey.yes_no(
-        f"Tu penses à {tools.bold(aki.first_guess['name'])} "
-        f"({tools.ital(aki.first_guess['description'])}) !\n"
-        f"J'ai bon ?\n{aki.first_guess['absolute_picture_path']}"
+        f"Tu penses à {tools.bold(aki.name_proposition)} "
+        f"({tools.ital(aki.description_proposition)}) !\n"
+        f"J'ai bon ?\n{aki.photo}"
     ):
         await chan.send("Yay\nhttps://fr.akinator.com/bundles/elokencesite/images/akitudes_670x1096/triomphe.png")
     else:

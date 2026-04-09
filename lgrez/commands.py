@@ -27,6 +27,7 @@ from lgrez.features import (
     sync,
     taches,
     voter_agir,
+    necromancien
 )
 
 if typing.TYPE_CHECKING:
@@ -61,6 +62,8 @@ class LGCommandTree(app_commands.CommandTree):
         self._add_module_commands(chans)
         # # Commandes spéciales, méta-commandes...
         self._add_module_commands(special)
+        # # Commandes alliés nécromanciens
+        self._add_module_commands(necromancien)
 
         # Commandes désactivées de base
         # self.disable_command("vote")
