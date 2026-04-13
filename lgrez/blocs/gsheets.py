@@ -224,7 +224,7 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     service = build("drive", "v3", credentials=_get_creds(scope))
     print(scope)
     print(service)
-    print((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")
+    print((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
     data = (
         service.files()
         .list(
