@@ -286,9 +286,14 @@ async def setup(journey: DiscordJourney):
         )
 
     n_emojis = 0
+    await journey.send(f"{structure}")
+    await journey.send(f"{structure["emojis"]}")
+    await journey.send(f"{structure["emojis"]["drive"]}")
     if structure["emojis"]["drive"]:
         folder_id = structure["emojis"]["folder_path_or_id"]
+        await journey.send(folder_id)
         for file in gsheets.get_files_in_folder(folder_id):
+       	    await journey.send(file)
             if file["extension"] != "png":
                 continue
             name = file["name"].removesuffix(".png")
