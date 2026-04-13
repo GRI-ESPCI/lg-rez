@@ -292,6 +292,7 @@ async def setup(journey: DiscordJourney):
             if file["extension"] != "png":
                 continue
             name = file["name"].removesuffix(".png")
+            await journey.send(f"name")
             if tools.emoji(name, must_be_found=False):
                 continue
             data = gsheets.download_file(file["file_id"])
