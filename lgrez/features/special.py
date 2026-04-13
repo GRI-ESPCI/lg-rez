@@ -286,9 +286,9 @@ async def setup(journey: DiscordJourney):
         )
 
     n_emojis = 0
-    await journey.send(f"{structure}")
-    await journey.send(f"{structure["emojis"]}")
-    await journey.send(f"{structure["emojis"]["drive"]}")
+    await journey.send(structure)
+    await journey.send(structure["emojis"])
+    await journey.send(structure["emojis"]["drive"])
     if structure["emojis"]["drive"]:
         folder_id = structure["emojis"]["folder_path_or_id"]
         await journey.send(folder_id)
