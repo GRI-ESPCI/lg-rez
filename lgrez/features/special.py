@@ -4,6 +4,7 @@ Commandes spéciales (méta-commandes, imitant ou impactant le
 déroulement des autres ou le fonctionnement du bot)
 
 """
+from googleapiclient.discovery import build
 
 import asyncio
 import os
@@ -288,7 +289,11 @@ async def setup(journey: DiscordJourney):
     n_emojis = 0
     if structure["emojis"]["drive"]:
         folder_id = structure["emojis"]["folder_path_or_id"]
-        await journey.send(gsheets.get_files_in_folder(folder_id))
+        scope = "https://www.googleapis.com/auth/drive.readonly"
+        service = build("drive", "v3", credentials=_get_creds(scope))   
+        await journey.send(scope)
+        await journey.send(service)
+        await journey.send((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
         for file in gsheets.get_files_in_folder(folder_id):
        	    await journey.send(file)
             if file["extension"] != "png":
