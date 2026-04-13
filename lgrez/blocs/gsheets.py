@@ -207,7 +207,7 @@ def get_doc_content(doc_id: str) -> list[tuple[str, dict]]:
     return content
 
 
-async def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
+def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     """Récupère le contenu binaire d'un fichier Google Drive.
     Args:
         folder_id: ID du fichier à récupérer (doit être public ou
@@ -222,9 +222,9 @@ async def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     """
     scope = "https://www.googleapis.com/auth/drive.readonly"
     service = build("drive", "v3", credentials=_get_creds(scope))   
-    await tools.log(scope)
-    await tools.log(service)
-    await tools.log((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
+    print(scope)
+    print(service)
+    print((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
     data = (
         service.files()
         .list(
