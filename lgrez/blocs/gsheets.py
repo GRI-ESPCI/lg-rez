@@ -18,7 +18,7 @@ from oauth2client import service_account
 from googleapiclient.discovery import build
 
 from lgrez import bdd
-from lgrez.blocs import env
+from lgrez.blocs import env, tools
 
 
 WorksheetNotFound = gspread.exceptions.WorksheetNotFound
@@ -222,8 +222,8 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     """
     scope = "https://www.googleapis.com/auth/drive.readonly"
     service = build("drive", "v3", credentials=_get_creds(scope))
-    print(scope)
-    print(service)
+    await tools.log(scope)
+    await tools.log(service)
     print((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
     data = (
         service.files()
