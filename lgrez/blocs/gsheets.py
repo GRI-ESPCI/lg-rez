@@ -222,9 +222,9 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
     """
     scope = "https://www.googleapis.com/auth/drive.readonly"
     service = build("drive", "v3", credentials=_get_creds(scope))   
-    async await tools.log(scope)
-    async await tools.log(service)
-    async await tools.log((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
+    tools.log(scope)
+    tools.log(service)
+    tools.log((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
     data = (
         service.files()
         .list(
