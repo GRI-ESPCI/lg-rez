@@ -284,7 +284,7 @@ async def setup(journey: DiscordJourney):
 #            roles=can_use,
 #        )
 #
-#    n_emojis = 0
+    n_emojis = 0
 #    if structure["emojis"]["drive"]:
 #        folder_id = structure["emojis"]["folder_path_or_id"]
 #        for file in gsheets.get_files_in_folder(folder_id):
