@@ -4,10 +4,6 @@ Commandes spéciales (méta-commandes, imitant ou impactant le
 déroulement des autres ou le fonctionnement du bot)
 
 """
-from googleapiclient.discovery import build
-from lgrez.blocs.gsheets import _get_creds
-
-
 import asyncio
 import os
 import sys
@@ -278,47 +274,42 @@ async def setup(journey: DiscordJourney):
     # Création emojis
     await journey.send("Import des emojis... (oui c'est très long)")
 
-    async def _create_emoji(name: str, data: bytes):
-        can_use = None
-        if restrict := structure["emojis"]["restrict_roles"].get(name):
-            can_use = [roles[role] for role in restrict]
-        await config.guild.create_custom_emoji(
-            name=name,
-            image=data,
-            roles=can_use,
-        )
-
-    n_emojis = 0
-    if structure["emojis"]["drive"]:
-        folder_id = structure["emojis"]["folder_path_or_id"]
-        scope = "https://www.googleapis.com/auth/drive.readonly"
-        service = build("drive", "v3", credentials=_get_creds(scope))   
-        await journey.send(scope)
-        await journey.send(service)
-        await journey.send((service.files().list(corpora="user",q=f"'{folder_id}' in parents",fields="files(id, fileExtension, name)")))
-        for file in gsheets.get_files_in_folder(folder_id):
-       	    await journey.send(file)
-            if file["extension"] != "png":
-                continue
-            name = file["name"].removesuffix(".png")
-            await journey.send(f"{name}")
-            if tools.emoji(name, must_be_found=False):
-                continue
-            data = gsheets.download_file(file["file_id"])
-            await _create_emoji(name, data)
-            n_emojis += 1
-    else:
-        root = structure["emojis"]["folder_path_or_id"]
-        for file in os.scandir(root):
-            name, extension = os.path.splitext(file.name)
-            if extension != ".png":
-                continue
-            if tools.emoji(name, must_be_found=False):
-                continue
-            with open(file.path, "rb") as fh:
-                data = fh.read()
-            await _create_emoji(name, data)
-            n_emojis += 1
+#    async def _create_emoji(name: str, data: bytes):
+#        can_use = None
+#        if restrict := structure["emojis"]["restrict_roles"].get(name):
+#           can_use = [roles[role] for role in restrict]
+#        await config.guild.create_custom_emoji(
+#            name=name,
+#            image=data,
+#            roles=can_use,
+#        )
+#
+#    n_emojis = 0
+#    if structure["emojis"]["drive"]:
+#        folder_id = structure["emojis"]["folder_path_or_id"]
+#        for file in gsheets.get_files_in_folder(folder_id):
+#       	    await journey.send(file)
+#            if file["extension"] != "png":
+#                continue
+#            name = file["name"].removesuffix(".png")
+#            await journey.send(f"{name}")
+#            if tools.emoji(name, must_be_found=False):
+#                continue
+#            data = gsheets.download_file(file["file_id"])
+#            await _create_emoji(name, data)
+#            n_emojis += 1
+#    else:
+#        root = structure["emojis"]["folder_path_or_id"]
+#        for file in os.scandir(root):
+#            name, extension = os.path.splitext(file.name)
+#            if extension != ".png":
+#                continue
+#            if tools.emoji(name, must_be_found=False):
+#                continue
+#            with open(file.path, "rb") as fh:
+#                data = fh.read()
+#            await _create_emoji(name, data)
+#            n_emojis += 1
     await journey.send(f"{n_emojis} emojis importés.")
 
     # Paramètres généraux du serveur
