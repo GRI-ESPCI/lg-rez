@@ -313,15 +313,15 @@ async def setup(journey: DiscordJourney):
     await journey.send(f"{n_emojis} emojis importés.")
 
     # Paramètres généraux du serveur
-    await journey.send("Configuration du serveur...")
-    if not structure["icon"]:
-        icon_data = None
-    elif structure["icon"]["drive"]:
-        file_id = structure["icon"]["png_path_or_id"]
-        icon_data = gsheets.download_file(file_id)
-    else:
-        with open(structure["icon"]["png_path_or_id"], "rb") as fh:
-            icon_data = fh.read()
+#    await journey.send("Configuration du serveur...")
+#    if not structure["icon"]:
+#        icon_data = None
+#    elif structure["icon"]["drive"]:
+#        file_id = structure["icon"]["png_path_or_id"]
+#        icon_data = gsheets.download_file(file_id)
+#    else:
+#        with open(structure["icon"]["png_path_or_id"], "rb") as fh:
+#            icon_data = fh.read()
 
     await config.guild.edit(
         name=structure["name"],
