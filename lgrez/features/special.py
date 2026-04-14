@@ -5,6 +5,8 @@ déroulement des autres ou le fonctionnement du bot)
 
 """
 from googleapiclient.discovery import build
+from lgrez.blocs.gsheets import _get_creds
+
 
 import asyncio
 import os
