@@ -73,6 +73,7 @@ class LGCommandTree(app_commands.CommandTree):
         # self.disable_command("candid")
         # self.disable_command("setup")
 
+
     def _add_module_commands(self, module: types.ModuleType) -> None:
         for name, value in inspect.getmembers(module):
             if isinstance(value, (app_commands.Command, app_commands.Group)):

@@ -17,7 +17,8 @@ from typing import Literal
 
 DESCRIPTION = """Commandes de gestion des alliés Nécromanciens"""
 
-_ALLIES_FILE = "allies_necromancien.json"
+import os as _os
+_ALLIES_FILE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "allies_necromancien.json")
 
 # Dictionnaire {discord_id (str) -> nom_allie (str)}, persisté dans _ALLIES_FILE
 

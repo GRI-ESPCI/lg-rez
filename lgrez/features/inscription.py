@@ -216,6 +216,25 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
         ok = await journey.yes_no(
             f"Tu me dis donc t'appeler {tools.bold(nom)}. C'est bon pour toi ? Pas d'erreur, pas de troll ?"
         )
+    ok = False
+    while not ok:
+        prenom, nom_famille = await journey.modal(
+            "À qui avons-nous l'honneur ?",
+            discord.ui.TextInput(label="Prénom", max_length=15),
+            discord.ui.TextInput(label="Nom", max_length=15),
+        )
+        nom = f"{prenom.strip().title()} {nom_famille.strip().title()}"
+    
+        if len(nom) > 32:
+            await journey.send(
+                f":x: Le nom « {nom} » est trop long (max 32 caractères, actuellement {len(nom)}). "
+                "Merci d'utiliser une version abrégée !"
+            )
+            continue
+    
+        ok = await journey.yes_no(
+            f"Tu me dis donc t'appeler {tools.bold(nom)}. C'est bon pour toi ? Pas d'erreur, pas de troll ?"
+        )
 
     await chan.edit(name=config.private_chan_prefix + nom)  # Renommage conv
     if member.top_role < config.Role.mj:
@@ -286,9 +305,9 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
         f"d'{tools.bold('activer toutes les notifications')} pour ce salon ! Promis, pas de spam :innocent:\n"
         'Pour le reste du serveur, tu peux le mettre en "mentions only",'
         f"en activant le {tools.code('@everyone')} – il est limité ;\n\n"
-        "Enfin, n'hésite pas à me parler, j'ai toujours quelques réponses en stock..."
+        "Enfin, n'hésite pas à me parler, j'ai toujours quelques réponses en stock... \n\n"
         f"- En raison du changement de règle sur le nécromancien ({tools.code('/roles nécromancien')}) il te faudra déclarer un allié potentiel,"
-        "pour cela tu as la commande {tools.code('/allie')}, n'hésite pas si tu as des questions."
+        f"pour cela tu as la commande {tools.code('/allie')}, n'hésite pas si tu as des questions."
     )
 
     await tools.sleep(chan, 5)

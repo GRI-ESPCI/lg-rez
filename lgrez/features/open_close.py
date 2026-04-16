@@ -282,6 +282,10 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
     random_message = await config.Channel.haros.send(
         f"Vote random (sera désigné a 18h15 en cas de majorité)", view=_RandomView(timeout=None)
     )
+    # Activation de la commande voterrandom
+    if qui == Vote.cond:
+        config.bot.tree.enable_command("voterrandom")
+        await config.bot.tree.sync(guild=config.guild)
 
 @open.command(name="actions")
 @tools.mjs_only
@@ -425,6 +429,14 @@ async def close_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = 
             await planif_command(ts, open_vote, qui=qui, heure=heure_chain, heure_chain=heure)
         else:
             await planif_command(ts, open_vote, qui=qui)
+     
+     # Désactivation de la commande voterrandom à la fermeture
+    if qui == Vote.cond:
+        try:
+            config.bot.tree.disable_command("voterrandom")
+            await config.bot.tree.sync(guild=config.guild)
+        except LookupError:
+            pass
 
 
 async def _close_action(action):

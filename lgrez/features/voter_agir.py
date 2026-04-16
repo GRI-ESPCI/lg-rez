@@ -584,3 +584,15 @@ async def add_all_actions(journey: DiscordJourney):
         action = gestion_actions.add_action(joueur=joueur, base=base, cooldown=cooldown, charges=charges)
         await journey.send(f"Action ajoutée (id {action.id}).")
     return
+    
+@app_commands.command()
+@tools.vivants_only
+@tools.private()
+@journey_command
+async def voterrandom(journey: DiscordJourney):
+    """Vote aléatoirement pour le condamné du jour (vote le joueur fictif 'Aléatoire').
+
+    Cette commande n'est utilisable que lorsqu'un vote pour le condamné est en cours.
+    """
+    moi = Joueur.from_member(journey.member)
+    await do_vote_random(journey, Vote.cond, votant=moi)

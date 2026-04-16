@@ -149,12 +149,17 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
             await boudoir.chan.send(info)
 
     class _InviteView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=None)
+            self._joueur = joueur
+            self._boudoir = boudoir
+            
         @discord.ui.button(style=discord.ButtonStyle.success, emoji="✅")
         async def ok(self, vote_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(vote_interaction) as journey:
-                if await add_joueur_to_boudoir(boudoir, joueur):
-                    await ack_invitation_response(f"{joueur.nom} a rejoint le boudoir !")
-                    await journey.send(f"Tu as bien rejoint {boudoir.chan.mention} !")
+                if await add_joueur_to_boudoir(self._boudoir, self._joueur):
+                    await ack_invitation_response(f"{self._joueur.nom} a rejoint le boudoir !")
+                    await journey.send(f"Tu as bien rejoint {self._boudoir.chan.mention} !")
                 else:
                     await journey.send("Impossible de rejoindre le boudoir :(")
             self.stop()
@@ -162,7 +167,7 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
         @discord.ui.button(style=discord.ButtonStyle.secondary, emoji="❌")
         async def c_non(self, contre_haro_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(contre_haro_interaction) as journey:
-                await ack_invitation_response(f"{joueur.nom} a refusé l'invitation à rejoindre ce boudoir.")
+                await ack_invitation_response(f"{self._joueur.nom} a refusé l'invitation à rejoindre ce boudoir.")
                 await journey.send("Invitation refusée.")
             self.stop()
 

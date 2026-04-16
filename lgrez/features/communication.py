@@ -311,11 +311,17 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
         @property
         def eligible(self):
+            if self.joueur.discord_id == -1:
+                return True
             return any(ch.type == haro_candidature for ch in self.joueur.candidharos)
+
 
         def couleur(self, choisi) -> str:
             if self == choisi:
                 return hex(couleur).replace("0x", "#")
+            if self.joueur.discord_id == -1:
+                # Aléatoire : toujours bleu comme un haro normal
+                return "#64b9e9"
             if self.eligible:
                 return "#64b9e9"
             else:
@@ -387,26 +393,36 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
     # Détermination rôle et camp
     emoji_camp = None
-    if not egalite_true : #correction d'une erreur en cas d'égalité en séparant les deux moyens de gestion
-    	if choisi:
-            if quoi == "cond":
-            	role, emoji_camp = await _chose_role_and_camp(journey, choisi.joueur)
-            	nom_et_role = f"{tools.bold(choisi.joueur.nom)}, {role}"
+    
+    _joueur_aleatoire_gagne = False
+
+    if not egalite_true:
+        if choisi:
+            joueur_choisi = choisi.joueur
+            if joueur_choisi.discord_id == -1:
+                _joueur_aleatoire_gagne = True
+                nom_et_role = "Pic nic douille c'est toi l'andouille"
+            elif quoi == "cond":
+                role, emoji_camp = await _chose_role_and_camp(journey, joueur_choisi)
+                nom_et_role = f"{tools.bold(joueur_choisi.nom)}, {role}"
             else:
-            	# Maire : ne pas annoncer le rôle
-            	nom_et_role = f"{tools.bold(choisi.joueur.nom)}"
-    	else:
+                nom_et_role = f"{tools.bold(joueur_choisi.nom)}"
+        else:
             nom_et_role = "personne, bande de tocards"
-    else :
-    	if choisi:
-            if quoi == "cond":
-            	role, emoji_camp = await _chose_role_and_camp(journey, choisi)
-            	nom_et_role = f"{tools.bold(choisi.nom)}, {role}"
+    else:
+        if choisi:
+            # Dans le cas égalité, choisi est un Joueur directement
+            if isinstance(choisi, Joueur) and choisi.discord_id == -1:
+                _joueur_aleatoire_gagne = True
+                nom_et_role = f"{tools.bold('Aléatoire')}"
+            elif quoi == "cond":
+                role, emoji_camp = await _chose_role_and_camp(journey, choisi)
+                nom_et_role = f"{tools.bold(choisi.nom)}, {role}"
             else:
-            	# Maire : ne pas annoncer le rôle
-            	nom_et_role = f"{tools.bold(choisi.nom)}"
-    	else:
-            nom_et_role = "personne, bande de tocards"    
+                nom_et_role = f"{tools.bold(choisi.nom)}"
+        else:
+            nom_et_role = "personne, bande de tocards"
+               
 
     # Création embed
     embed = discord.Embed(
@@ -439,6 +455,12 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
 
     await config.Channel.annonces.send("@everyone Résultat du vote ! :fire:", file=file, embed=embed)
     await journey.send(f"Et c'est parti dans {config.Channel.annonces.mention} !")
+    if _joueur_aleatoire_gagne:
+        await config.Channel.debats.send(
+            f"{config.Role.joueur_en_vie.mention} vous avez choisi de sacrifier l'un ou l'une d'entre vous "
+            "de manière aléatoire. C'est l'heure du grand tirage. "
+            "https://klipy.com/gifs/jennifer-lawrence-the-mocking-jay-47"
+        )
 
     if quoi == "cond":
         # Actions au mot des MJs
@@ -579,13 +601,12 @@ async def plot_int(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], d
         def votes(self):
             return len(self.votants)
 
-        @property
-        def eligible(self):
-            return any(ch.type == haro_candidature for ch in self.joueur.candidharos)
-
         def couleur(self, choisi) -> str:
             if self == choisi:
                 return hex(couleur).replace("0x", "#")
+            if self.joueur.discord_id == -1:
+                # Aléatoire : toujours bleu comme un haro normal
+                return "#64b9e9"
             if self.eligible:
                 return "#64b9e9"
             else:
