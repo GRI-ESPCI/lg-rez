@@ -149,8 +149,8 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
             await boudoir.chan.send(info)
 
     class _InviteView(discord.ui.View):
-        def __init__(self):
-            super().__init__(timeout=None)
+        def __init__(self, timeout=None):
+            super().__init__(timeout=timeout)
             self._joueur = joueur
             self._boudoir = boudoir
             
