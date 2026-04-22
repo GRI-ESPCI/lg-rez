@@ -210,14 +210,6 @@ async def _inscription_process(journey: DiscordJourney, member: discord.Member, 
 
     ok = False
     while not ok:
-        prenom, nom_famille = await journey.modal("À qui avons-nous l'honneur ?", "Prénom", "Nom")
-        nom = f"{prenom.strip().title()} {nom_famille.strip().title()}"
-
-        ok = await journey.yes_no(
-            f"Tu me dis donc t'appeler {tools.bold(nom)}. C'est bon pour toi ? Pas d'erreur, pas de troll ?"
-        )
-    ok = False
-    while not ok:
         prenom, nom_famille = await journey.modal(
             "À qui avons-nous l'honneur ?",
             discord.ui.TextInput(label="Prénom"),
