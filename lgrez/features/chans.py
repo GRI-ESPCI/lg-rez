@@ -93,6 +93,8 @@ async def add_joueur_to_boudoir(boudoir: Boudoir, joueur: Joueur, gerant: bool =
         await boudoir.chan.send(tools.ital("[Ce boudoir contient au moins deux joueurs vivants, " "désarchivage...]"))
         categ = await tools.multicateg(config.boudoirs_category_name)
         await boudoir.chan.edit(name=boudoir.nom, category=categ)
+    if not gerant:
+        await boudoir.chan.send(f"{joueur.nom} a rejoint le boudoir !")
     return True
 
 
@@ -153,12 +155,11 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
             super().__init__(timeout=timeout)
             self._joueur = joueur
             self._boudoir = boudoir
-            
+
         @discord.ui.button(style=discord.ButtonStyle.success, emoji="✅")
         async def ok(self, vote_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(vote_interaction) as journey:
                 if await add_joueur_to_boudoir(self._boudoir, self._joueur):
-                    await ack_invitation_response(f"{self._joueur.nom} a rejoint le boudoir !")
                     await journey.send(f"Tu as bien rejoint {self._boudoir.chan.mention} !")
                 else:
                     await journey.send("Impossible de rejoindre le boudoir :(")
@@ -434,7 +435,7 @@ async def _mp(journey: DiscordJourney, *, joueur: Joueur):
 
     await journey.send(f":sunglasses: Ton boudoir a bien été créé : {boudoir.chan.mention}")
 
-    [mess] = await boudoir.chan.send(f"Invitation envoyée à {joueur.nom}.")
+    [mess] = await journey.send(f"Invitation envoyée à {joueur.nom}.")
     asyncio.create_task(_invite(joueur, boudoir, mess))
     # On envoie l'invitation en arrière-plan (libération du chan).
 
