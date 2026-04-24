@@ -155,7 +155,7 @@ async def _invite(joueur: Joueur, boudoir: Boudoir, invite_msg: discord.Message)
             super().__init__(timeout=timeout)
             self._joueur = joueur
             self._boudoir = boudoir
-            
+
         @discord.ui.button(style=discord.ButtonStyle.success, emoji="✅")
         async def ok(self, vote_interaction: discord.Interaction, button: discord.ui.Button):
             async with DiscordJourney(vote_interaction) as journey:
@@ -474,7 +474,7 @@ async def mp_menu(journey: DiscordJourney, member: discord.Member):
         return
 
     await _mp(journey, joueur=joueur)
-9
+
 
 @app_commands.command()
 @tools.mjs_only
