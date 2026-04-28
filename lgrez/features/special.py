@@ -285,6 +285,7 @@ async def setup(journey: DiscordJourney):
         )
 
     n_emojis = 0
+    n_lourds = 0
     if structure["emojis"]["drive"]:
         folder_id = structure["emojis"]["folder_path_or_id"]
         for file in gsheets.get_files_in_folder(folder_id):
@@ -293,6 +294,10 @@ async def setup(journey: DiscordJourney):
                 continue
             name = file["name"].removesuffix(".png")
             await journey.send(f"{name}")
+            if int(file["size"]) > 700000: 
+                n_lourds += 1
+                await journey.send(f"{name} trop lourd, ne peut pas être importé.")
+                continue  
             if tools.emoji(name, must_be_found=False):
                 continue
             data = gsheets.download_file(file["file_id"])
@@ -311,6 +316,8 @@ async def setup(journey: DiscordJourney):
             await _create_emoji(name, data)
             n_emojis += 1
     await journey.send(f"{n_emojis} emojis importés.")
+    if n_lourds != 0: 
+        await journey.send(f"{n_lourds} emojis n'ont pas pu être importés, la limite est de 700 000 octets. Importez-les manuellement.") 
 
     # Paramètres généraux du serveur
     await journey.send("Configuration du serveur...")
