@@ -227,7 +227,7 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
         .list(
             corpora="user",
             q=f"'{folder_id}' in parents",
-            fields="files(id, fileExtension, name)",
+            fields="files(id, fileExtension, name, size)",
         )
         .execute()
     )
@@ -238,6 +238,7 @@ def get_files_in_folder(folder_id: str) -> list[dict[str, str]]:
             "file_id": file_data.get("id", ""),
             "name": file_data.get("name", ""),
             "extension": file_data.get("fileExtension", ""),
+            "size": file_data.get("size", ""),
         }
         for file_data in data.get("files", [])
     ]
