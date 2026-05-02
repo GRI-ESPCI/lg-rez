@@ -347,7 +347,6 @@ async def vivants(journey: DiscordJourney):
     await journey.send(mess, code=True, prefix=f"Les {len(joueurs)} joueurs vivants sont :")
 
 @app_commands.command()
-@tools.mjs_only
 @journey_command
 async def vivants_nombre(journey: DiscordJourney):
     """Affiche le nombre de joueurs vivants"""
