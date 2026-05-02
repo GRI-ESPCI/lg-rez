@@ -77,6 +77,10 @@ async def roll(journey: DiscordJourney, *, pattern: str):
         result = random.choice(Camp.query.filter_by(public=True).all()).nom
     elif inp in ["ludo", "ludopathe"]:
         result = random.choice(["Voyante", "Marionnettiste", "Notaire", "Popo de mort", "Chat-garou", "Espion"])
+    elif inp in ["comédien", "comedien"]:
+        role1 = random.choice(["Intriguant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
+        role2 = random.choice(["Intriguant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
+        result = f"{role1} \n{role2}"
     elif inp in ["taverne", "tavernier"]:
         role1 = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
         if role1 == "Rôle random" : 
