@@ -444,16 +444,7 @@ async def plot(journey: DiscordJourney, *, quoi: Literal["cond", "maire"], depui
     )
     else : 
         embed.set_footer(
-            text="Ont voté :" + "\n".join(
-                sorted(
-                    ", ".join(
-                        cible.votants),
-                    key=lambda x: (x in ("Corbeau", "Imprimeur"), x
-                    )
-                )
-            )
-            for cible in cibles
-        )
+            text="Ont voté :" + ", ".join(sorted( ", ".join(cible.votants)for cible in cibles)))
         
     await tools.log(f"\n".join(("A" if cible.votes == 1 else "Ont")+ f" voté {pour_contre} {cible.joueur.nom} : "+ ", ".join(cible.votants)for cible in cibles))
 
