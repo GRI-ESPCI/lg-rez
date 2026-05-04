@@ -279,13 +279,14 @@ async def open_vote(journey: DiscordJourney, *, qui: Vote, heure: str | None = N
         async def on_error(self, _interaction: discord.Interaction, error: Exception, _item: discord.ui.Item) -> None:
             raise error
 
-    random_message = await config.Channel.haros.send(
-        f"Vote random (sera désigné a 18h15 en cas de majorité)", view=_RandomView(timeout=None)
-    )
+
     # Activation de la commande voterrandom
     if qui == Vote.cond:
         config.bot.tree.enable_command("voterrandom")
         await config.bot.tree.sync(guild=config.guild)
+        random_message = await config.Channel.haros.send(
+            f"Vote random (sera désigné a 18h15 en cas de majorité)", view=_RandomView(timeout=None)
+        )
 
 @open.command(name="actions")
 @tools.mjs_only
