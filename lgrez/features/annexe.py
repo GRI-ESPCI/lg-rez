@@ -78,8 +78,8 @@ async def roll(journey: DiscordJourney, *, pattern: str):
     elif inp in ["ludo", "ludopathe"]:
         result = random.choice(["Voyante", "Marionnettiste", "Notaire", "Popo de mort", "Chat-garou", "Espion"])
     elif inp in ["comédien", "comedien"]:
-        role1 = random.choice(["Intriguant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
-        role2 = random.choice(["Intriguant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
+        role1 = random.choice(["Intrigant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
+        role2 = random.choice(["Intrigant", "Maquerelle", "Légiste", "Protecteur", "Chasseur", "Espion", "Imprimeur", "Ludopathe"])
         result = f"{role1} \n{role2}"
     elif inp in ["taverne", "tavernier"]:
         role1 = random.choice(["Rôle choisi", "Vrai rôle", "Rôle random"])
@@ -91,7 +91,7 @@ async def roll(journey: DiscordJourney, *, pattern: str):
                role = random.choice(Role.query.filter_by(actif=True).all())
                role2 += f" : {role.nom_complet}"
         result = f"{role1} \n{role2}"
-    elif inp in ["loup", "méchants", "nécro", "necromants", "nécromancien", "nécromanciens", "loups", "meute"]:
+    elif inp in ["loup", "méchants", "nécro", "necromants", "nécromancien", "nécromanciens", "loups", "meute", "necro"]:
     	 if "mj" not in journey.member.top_role.name.lower():
     	       moi = Joueur.from_member(journey.member)
     	       result = moi
