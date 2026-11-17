@@ -355,6 +355,13 @@ async def vivants_nombre(journey: DiscordJourney):
 
 @app_commands.command()
 @journey_command
+async def morts_nombre(journey: DiscordJourney):
+    """Affiche le nombre de joueurs morts"""
+    joueurs = Joueur.query.filter(Joueur.est_mort, Joueur.discord_id != -1).all()
+    await journey.send(f"Il y a {len(joueurs)} joueurs morts.")
+
+@app_commands.command()
+@journey_command
 async def morts(journey: DiscordJourney):
     """Affiche la liste des joueurs morts.
 
